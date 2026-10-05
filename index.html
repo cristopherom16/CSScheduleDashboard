@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CUSTOMER SUPPORT SCHEDULE DASHBOARD</title>
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --border: #334155;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --onduty: #10b981;
+      --offduty: #ef4444;
+      --break: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+    h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    
+    .controls-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; }
+    .card { background-color: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); }
+
+    .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 10px; }
+
+    select, button, input { background: #0f172a; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; }
+    select:focus, input:focus { border-color: var(--accent); }
+    button { background: var(--accent); cursor: pointer; font-weight: 600; border: none; transition: background 0.2s; color: white; }
+    button:hover { background: var(--accent-hover); }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .kpi-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; }
+    .kpi-card .val { font-size: 1.8rem; font-weight: bold; margin-top: 5px; color: var(--accent); }
+    
+    .heatmap-container { overflow-x: auto; margin-top: 15px; }
+    .grid-table { border-collapse: collapse; width: 100%; font-size: 0.75rem; text-align: center; }
+    .grid-table th, .grid-table td { border: 1px solid var(--border); padding: 4px; min-width: 28px; text-align: center; }
+    .grid-table th { background: #0f172a; position: sticky; top: 0; z-index: 2; }
+    .grid-table td.agent-col { text-align: left; font-weight: bold; position: sticky; left: 0; background: var(--panel); z-index: 1; min-width: 140px; }
+
+    /* Heatmap Colors */
+    .break-cell { background-color: #78350f !important; color: #fde68a !important; }
+    .lunch-cell { background-color: #831843 !important; color: #fbcfe8 !important; }
+    .off-cell { background-color: #0f172a !important; color: #475569; }
+    .duty-cell { background-color: #059669 !important; color: #ffffff !important; }
+
+    .editable-table-wrap { overflow-x: auto; max-height: 400px; }
+    table.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    table.data-table th { background: #0f172a; text-align: center; color: var(--text); border: 1px solid var(--border); padding: 10px; }
+    table.data-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+    table.data-table td.agent-name-cell { text-align: left; }
+    
+    /* Dynamic Branch Color Styles */
+    tr.branch-gua { background-color: #bae6fd !important; color: #000000 !important; }
+    tr.branch-mx { background-color: #bbf7d0 !important; color: #000000 !important; }
+    tr.branch-col { background-color: #fed7aa !important; color: #000000 !important; }
+    tr.branch-pan { background-color: #fecaca !important; color: #000000 !important; }
+    tr.branch-jam { background-color: #fef08a !important; color: #000000 !important; }
+    tr.branch-usa { background-color: #1e40af !important; color: #ffffff !important; }
+
+    /* Drag & Drop Styles */
+    tr.draggable-row { cursor: move; }
+    tr.dragging { opacity: 0.5; }
+    .drag-handle { cursor: grab; margin-right: 8px; }
+    .drag-handle:active { cursor: grabbing; }
+
+    /* Input Styling for centered values */
+    table.data-table td input { background: transparent; border: 1px solid transparent; color: inherit; padding: 4px; border-radius: 4px; text-align: center; font-weight: 600; }
+    table.data-table td.agent-name-cell input { text-align: left; width: calc(100% - 28px); }
+    table.data-table td input[readonly] { cursor: default; }
+    table.data-table td input.editing-mode { background: #0f172a !important; color: #ffffff !important; border-color: var(--accent) !important; }
+
+    .action-btn-group { display: flex; gap: 6px; justify-content: center; }
+    .btn-edit { background: #f59e0b; }
+    .btn-edit:hover { background: #d97706; }
+    .btn-save { background: #10b981; }
+    .btn-save:hover { background: #059669; }
+    .btn-delete { background: #ef4444; }
+    .btn-delete:hover { background: #dc2626; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><i class="fa-solid fa-chart-line"></i> CUSTOMER SUPPORT SCHEDULE DASHBOARD</h1>
+    <div>
+      <span id="last-updated" style="font-size: 0.8rem; color: #10b981;"><i class="fa-solid fa-lock"></i> Protected Operations Panel</span>
+    </div>
+  </header>
+
+  <div class="controls-bar">
+    <div>
+      <label style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Select Team / Schedule:</label>
+      <select id="team-select" onchange="switchTeam()">
+        <!-- Options populated dynamically -->
+      </select>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Total Scheduled Agents</div>
+      <div class="val" id="kpi-total-agents">0</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Peak On-Duty Staffing</div>
+      <div class="val" id="kpi-peak-staffing" style="color: var(--onduty);">0</div>
+    </div>
+    <div class="kpi-card">
+      <div style="font-size: 0.8rem; color: var(--text-muted);">Max Concurrent Breaks</div>
+      <div class="val" id="kpi-max-breaks" style="color: var(--break);">0</div>
+    </div>
+  </div>
+
+  <!-- Heatmap Card -->
+  <div class="card">
+    <h3><i class="fa-solid fa-fire"></i> 15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)</h3>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+      Green = On Duty (ON), Brown = Break (BR), Pink/Red = Lunch (LU).
+    </p>
+    <div class="heatmap-container" id="heatmap-wrap"></div>
+  </div>
+
+  <!-- Editable Table Card -->
+  <div class="card">
+    <div class="card-header-flex">
+      <h3><i class="fa-solid fa-pen-to-square"></i> Agent Schedule Details</h3>
+      <button onclick="addAgentRow()"><i class="fa-solid fa-user-plus"></i> Add Agent</button>
+    </div>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+      Drag rows freely to reorder. Password required to add, edit, or delete agents/teams.
+    </p>
+    <div class="editable-table-wrap">
+      <table class="data-table" id="schedule-table">
+        <thead>
+          <tr>
+            <th style="text-align: left;">Agent Name</th>
+            <th>Site / Branch</th>
+            <th>Clock In</th>
+            <th>Break 1</th>
+            <th>Lunch</th>
+            <th>Break 2</th>
+            <th>Clock Out</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="schedule-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const AUTH_PASSWORD = "management2026!";
+    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA";
+    const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM";
+
+    function checkPassword() {
+      const input = prompt("Authentication required. Please enter the management password:");
+      if (input === AUTH_PASSWORD) {
+        return true;
+      } else {
+        alert("Incorrect password. Action denied.");
+        return false;
+      }
+    }
+
+    function generateTimeSlots() {
+      const slots = [];
+      let start = 6 * 60;
+      let end = 22 * 60;
+      for (let m = start; m <= end; m += 15) {
+        let hrs = Math.floor(m / 60);
+        let mins = m % 60;
+        let hh = hrs < 10 ? '0' + hrs : hrs;
+        let mm = mins < 10 ? '0' + mins : mins;
+        slots.push(`${hh}:${mm}`);
+      }
+      return slots;
+    }
+
+    const timeSlots = generateTimeSlots();
+
+    const defaultData = {
+      "OS Cases Team": [
+        { name: "Emely Hernandez", site: "GUA", in: "06:00", b1: "08:00", lu: "10:45-11:45", b2: "13:45", out: "15:00" },
+        { name: "Pablo Saquilmer", site: "GUA", in: "07:00", b1: "10:00", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
+        { name: "Diana Orozco", site: "GUA", in: "10:00", b1: "12:00", lu: "16:45-17:45", b2: "15:00", out: "18:30" },
+        { name: "Lucia Herrera", site: "GUA", in: "07:00", b1: "08:45", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
+        { name: "Fernando Garcia", site: "MX", in: "07:00", b1: "09:15", lu: "11:45-12:45", b2: "14:15", out: "16:00" },
+        { name: "Emilia Chajon", site: "GUA", in: "08:00", b1: "09:45", lu: "12:15-12:30", b2: "14:45", out: "16:15" },
+        { name: "Alejandra Manco", site: "COL", in: "08:00", b1: "08:45", lu: "13:15-14:15", b2: "15:00", out: "16:30" },
+        { name: "Galilea Gutierrez", site: "MX", in: "08:00", b1: "10:15", lu: "13:30-14:30", b2: "15:45", out: "16:30" },
+        { name: "Jorge Saban", site: "GUA", in: "08:30", b1: "10:30", lu: "14:45-15:45", b2: "13:15", out: "17:15" },
+        { name: "Rudy Herrera", site: "GUA", in: "12:00", b1: "13:30", lu: "17:30-18:30", b2: "16:00", out: "18:30" }
+      ],
+      "OS Phones Team": [
+        { name: "Lelburn Gordon", site: "PAN", in: "06:00", b1: "08:30", lu: "11:30-12:00", b2: "13:30", out: "15:30" },
+        { name: "Dean Spencer", site: "PAN", in: "06:00", b1: "08:45", lu: "11:00-11:30", b2: "13:45", out: "15:30" },
+        { name: "Stephanie Temple", site: "PAN", in: "07:00", b1: "09:45", lu: "12:00-12:30", b2: "14:45", out: "16:30" },
+        { name: "Shanique Kelly", site: "JAM", in: "07:00", b1: "09:00", lu: "12:15-13:00", b2: "", out: "16:00" },
+        { name: "Ryan Barber", site: "USA", in: "07:00", b1: "", lu: "14:00-15:00", b2: "", out: "16:30" }
+      ],
+      "TFX Schedule": [
+        { name: "Fernando Daniel Ramirez", site: "MX", in: "09:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "17:00" },
+        { name: "Maria Fernanda Saucedo", site: "MX", in: "10:00", b1: "11:00", lu: "12:30-13:30", b2: "14:30", out: "18:00" }
+      ]
+    };
+
+    let scheduleData = loadFromStorage();
+    let activeTeam = localStorage.getItem(ACTIVE_TEAM_KEY) || "OS Cases Team";
+    let draggedIndex = null;
+
+    function saveToStorage() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduleData));
+      localStorage.setItem(ACTIVE_TEAM_KEY, activeTeam);
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try { return JSON.parse(saved); } catch(e) {}
+      }
+      return JSON.parse(JSON.stringify(defaultData));
+    }
+
+    function populateTeamSelect() {
+      const select = document.getElementById("team-select");
+      select.innerHTML = "";
+
+      Object.keys(scheduleData).forEach(team => {
+        const opt = document.createElement("option");
+        opt.value = team;
+        opt.textContent = team;
+        if (team === activeTeam) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      const createOpt = document.createElement("option");
+      createOpt.value = "__CREATE_NEW_TEAM__";
+      createOpt.textContent = "+ Create New Team";
+      select.appendChild(createOpt);
+    }
+
+    function timeToMinutes(tStr) {
+      if (!tStr || !tStr.includes(':')) return null;
+      const [h, m] = tStr.trim().split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function getBranchClass(siteCode) {
+      if (!siteCode) return "";
+      const code = siteCode.trim().toUpperCase();
+      switch (code) {
+        case 'GUA': return 'branch-gua';
+        case 'MX': return 'branch-mx';
+        case 'COL': return 'branch-col';
+        case 'PAN': return 'branch-pan';
+        case 'JAM': return 'branch-jam';
+        case 'USA': return 'branch-usa';
+        default: return '';
+      }
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("schedule-tbody");
+      tbody.innerHTML = "";
+      const agents = scheduleData[activeTeam] || [];
+
+      agents.forEach((ag, idx) => {
+        const tr = document.createElement("tr");
+        tr.id = `row-${idx}`;
+        const branchClass = getBranchClass(ag.site);
+        tr.className = `draggable-row ${branchClass}`;
+        tr.draggable = true;
+
+        tr.addEventListener('dragstart', (e) => handleDragStart(e, idx));
+        tr.addEventListener('dragover', handleDragOver);
+        tr.addEventListener('drop', (e) => handleDrop(e, idx));
+        tr.addEventListener('dragend', handleDragEnd);
+
+        tr.innerHTML = `
+          <td class="agent-name-cell">
+            <i class="fa-solid fa-bars drag-handle" title="Drag to reorder"></i>
+            <input type="text" id="input-${idx}-name" value="${ag.name}" readonly>
+          </td>
+          <td><input type="text" id="input-${idx}-site" value="${ag.site}" readonly style="width: 60px;"></td>
+          <td><input type="text" id="input-${idx}-in" value="${ag.in}" readonly style="width: 75px;"></td>
+          <td><input type="text" id="input-${idx}-b1" value="${ag.b1}" readonly style="width: 75px;"></td>
+          <td><input type="text" id="input-${idx}-lu" value="${ag.lu}" readonly style="width: 110px;"></td>
+          <td><input type="text" id="input-${idx}-b2" value="${ag.b2}" readonly style="width: 75px;"></td>
+          <td><input type="text" id="input-${idx}-out" value="${ag.out}" readonly style="width: 75px;"></td>
+          <td>
+            <div class="action-btn-group" id="btn-group-${idx}">
+              <button class="btn-edit" onclick="enableRowEdit(${idx})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      renderHeatmap();
+    }
+
+    function handleDragStart(e, index) {
+      draggedIndex = index;
+      e.target.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    }
+
+    function handleDragOver(e) {
+      if (e.preventDefault) e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      return false;
+    }
+
+    function handleDrop(e, targetIndex) {
+      e.stopPropagation();
+      if (draggedIndex !== null && draggedIndex !== targetIndex) {
+        const list = scheduleData[activeTeam];
+        const draggedItem = list.splice(draggedIndex, 1)[0];
+        list.splice(targetIndex, 0, draggedItem);
+
+        saveToStorage();
+        renderTable();
+      }
+      return false;
+    }
+
+    function handleDragEnd(e) {
+      if (e.target) e.target.classList.remove('dragging');
+      draggedIndex = null;
+    }
+
+    function enableRowEdit(idx) {
+      if (!checkPassword()) return;
+
+      const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+      fields.forEach(f => {
+        const input = document.getElementById(`input-${idx}-${f}`);
+        input.removeAttribute('readonly');
+        input.classList.add('editing-mode');
+      });
+
+      const btnGroup = document.getElementById(`btn-group-${idx}`);
+      btnGroup.innerHTML = `
+        <button class="btn-save" onclick="saveRowEdit(${idx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
+        <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+      `;
+    }
+
+    function saveRowEdit(idx) {
+      const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+      fields.forEach(f => {
+        const input = document.getElementById(`input-${idx}-${f}`);
+        input.setAttribute('readonly', 'readonly');
+        input.classList.remove('editing-mode');
+        scheduleData[activeTeam][idx][f] = input.value;
+      });
+
+      saveToStorage();
+      renderTable();
+    }
+
+    function addAgentRow() {
+      if (!checkPassword()) return;
+
+      if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
+      const newIdx = scheduleData[activeTeam].length;
+      scheduleData[activeTeam].push({ name: "New Agent", site: "GUA", in: "08:00", b1: "10:00", lu: "12:00-13:00", b2: "15:00", out: "17:00" });
+      saveToStorage();
+      renderTable();
+      
+      const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+      fields.forEach(f => {
+        const input = document.getElementById(`input-${newIdx}-${f}`);
+        if(input) {
+          input.removeAttribute('readonly');
+          input.classList.add('editing-mode');
+        }
+      });
+      const btnGroup = document.getElementById(`btn-group-${newIdx}`);
+      if(btnGroup) {
+        btnGroup.innerHTML = `
+          <button class="btn-save" onclick="saveRowEdit(${newIdx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
+          <button class="btn-delete" onclick="removeAgent(${newIdx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+        `;
+      }
+    }
+
+    function removeAgent(idx) {
+      if (!checkPassword()) return;
+
+      scheduleData[activeTeam].splice(idx, 1);
+      saveToStorage();
+      renderTable();
+    }
+
+    function switchTeam() {
+      const select = document.getElementById("team-select");
+      const val = select.value;
+
+      if (val === "__CREATE_NEW_TEAM__") {
+        if (!checkPassword()) {
+          select.value = activeTeam;
+          return;
+        }
+
+        const teamName = prompt("Enter the name for the new team:");
+        if (teamName && teamName.trim() !== "") {
+          const cleanName = teamName.trim();
+          if (!scheduleData[cleanName]) {
+            scheduleData[cleanName] = [];
+          }
+          activeTeam = cleanName;
+          saveToStorage();
+          populateTeamSelect();
+        } else {
+          select.value = activeTeam;
+        }
+      } else {
+        activeTeam = val;
+        saveToStorage();
+      }
+
+      if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
+      renderTable();
+    }
+
+    function renderHeatmap() {
+      const wrap = document.getElementById("heatmap-wrap");
+      const agents = scheduleData[activeTeam] || [];
+
+      document.getElementById("kpi-total-agents").innerText = agents.length;
+
+      let html = `<table class="grid-table"><thead><tr><th class="agent-col">Agent Name</th>`;
+      timeSlots.forEach(ts => { html += `<th>${ts}</th>`; });
+      html += `</tr></thead><tbody>`;
+
+      let maxDuty = 0;
+      let maxBreaks = 0;
+      const slotCounts = {};
+      timeSlots.forEach(ts => slotCounts[ts] = { duty: 0, break: 0 });
+
+      agents.forEach(ag => {
+        html += `<tr><td class="agent-col">${ag.name} (${ag.site})</td>`;
+        
+        const inM = timeToMinutes(ag.in);
+        const outM = timeToMinutes(ag.out);
+        const b1M = timeToMinutes(ag.b1);
+        const b2M = timeToMinutes(ag.b2);
+
+        let luStart = null, luEnd = null;
+        if (ag.lu && ag.lu.includes('-')) {
+          const parts = ag.lu.split('-');
+          luStart = timeToMinutes(parts[0]);
+          luEnd = timeToMinutes(parts[1]);
+        }
+
+        timeSlots.forEach(ts => {
+          const slotM = timeToMinutes(ts);
+          let cellClass = "off-cell";
+          let label = "";
+
+          if (inM !== null && outM !== null && slotM >= inM && slotM < outM) {
+            if (b1M !== null && slotM === b1M) {
+              cellClass = "break-cell"; label = "BR";
+              slotCounts[ts].break++;
+            } else if (b2M !== null && slotM === b2M) {
+              cellClass = "break-cell"; label = "BR";
+              slotCounts[ts].break++;
+            } else if (luStart !== null && luEnd !== null && slotM >= luStart && slotM < luEnd) {
+              cellClass = "lunch-cell"; label = "LU";
+              slotCounts[ts].break++;
+            } else {
+              cellClass = "duty-cell"; label = "ON";
+              slotCounts[ts].duty++;
+            }
+          }
+
+          html += `<td class="${cellClass}">${label}</td>`;
+        });
+
+        html += `</tr>`;
+      });
+
+      // Total On-Duty Summary Row
+      html += `<tr style="background:#0f172a; font-weight:bold;"><td class="agent-col">TOTAL ON DUTY</td>`;
+      timeSlots.forEach(ts => {
+        const count = slotCounts[ts].duty;
+        if (count > maxDuty) maxDuty = count;
+        if (slotCounts[ts].break > maxBreaks) maxBreaks = slotCounts[ts].break;
+        html += `<td style="color:#10b981;">${count}</td>`;
+      });
+      html += `</tr></tbody></table>`;
+
+      wrap.innerHTML = html;
+      document.getElementById("kpi-peak-staffing").innerText = maxDuty + " Agents";
+      document.getElementById("kpi-max-breaks").innerText = maxBreaks + " Agents";
+    }
+
+    // Initialize
+    populateTeamSelect();
+    renderTable();
+  </script>
+</body>
+</html>
