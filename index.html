@@ -172,6 +172,15 @@
     const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA";
     const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM";
 
+    const TEAM_ORDER = [
+      "OS Phones Team",
+      "OS Cases Team",
+      "ELD Team",
+      "INS Team",
+      "LL+ Team",
+      "TFX Team"
+    ];
+
     function checkPassword() {
       const input = prompt("Authentication required. Please enter the management password:");
       if (input === AUTH_PASSWORD) {
@@ -199,6 +208,13 @@
     const timeSlots = generateTimeSlots();
 
     const defaultData = {
+      "OS Phones Team": [
+        { name: "Lelburn Gordon", site: "PAN", in: "06:00", b1: "08:30", lu: "11:30-12:00", b2: "13:30", out: "15:30" },
+        { name: "Dean Spencer", site: "PAN", in: "06:00", b1: "08:45", lu: "11:00-11:30", b2: "13:45", out: "15:30" },
+        { name: "Stephanie Temple", site: "PAN", in: "07:00", b1: "09:45", lu: "12:00-12:30", b2: "14:45", out: "16:30" },
+        { name: "Shanique Kelly", site: "JAM", in: "07:00", b1: "09:00", lu: "12:15-13:00", b2: "", out: "16:00" },
+        { name: "Ryan Barber", site: "USA", in: "07:00", b1: "", lu: "14:00-15:00", b2: "", out: "16:30" }
+      ],
       "OS Cases Team": [
         { name: "Emely Hernandez", site: "GUA", in: "06:00", b1: "08:00", lu: "10:45-11:45", b2: "13:45", out: "15:00" },
         { name: "Pablo Saquilmer", site: "GUA", in: "07:00", b1: "10:00", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
@@ -211,14 +227,10 @@
         { name: "Jorge Saban", site: "GUA", in: "08:30", b1: "10:30", lu: "14:45-15:45", b2: "13:15", out: "17:15" },
         { name: "Rudy Herrera", site: "GUA", in: "12:00", b1: "13:30", lu: "17:30-18:30", b2: "16:00", out: "18:30" }
       ],
-      "OS Phones Team": [
-        { name: "Lelburn Gordon", site: "PAN", in: "06:00", b1: "08:30", lu: "11:30-12:00", b2: "13:30", out: "15:30" },
-        { name: "Dean Spencer", site: "PAN", in: "06:00", b1: "08:45", lu: "11:00-11:30", b2: "13:45", out: "15:30" },
-        { name: "Stephanie Temple", site: "PAN", in: "07:00", b1: "09:45", lu: "12:00-12:30", b2: "14:45", out: "16:30" },
-        { name: "Shanique Kelly", site: "JAM", in: "07:00", b1: "09:00", lu: "12:15-13:00", b2: "", out: "16:00" },
-        { name: "Ryan Barber", site: "USA", in: "07:00", b1: "", lu: "14:00-15:00", b2: "", out: "16:30" }
-      ],
-      "TFX Schedule": [
+      "ELD Team": [],
+      "INS Team": [],
+      "LL+ Team": [],
+      "TFX Team": [
         { name: "Fernando Daniel Ramirez", site: "MX", in: "09:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "17:00" },
         { name: "Maria Fernanda Saucedo", site: "MX", in: "10:00", b1: "11:00", lu: "12:30-13:30", b2: "14:30", out: "18:00" }
       ]
@@ -245,14 +257,23 @@
       const select = document.getElementById("team-select");
       select.innerHTML = "";
 
-      const teams = Object.keys(scheduleData);
-      if (teams.length === 0) {
+      const keys = Object.keys(scheduleData);
+      if (keys.length === 0) {
         scheduleData["OS Phones Team"] = [];
         activeTeam = "OS Phones Team";
         saveToStorage();
       }
 
-      Object.keys(scheduleData).forEach(team => {
+      // Ordenar respetando el orden definido en TEAM_ORDER y agregando al final los creados manualmente
+      const sortedTeams = Object.keys(scheduleData).sort((a, b) => {
+        let idxA = TEAM_ORDER.indexOf(a);
+        let idxB = TEAM_ORDER.indexOf(b);
+        if (idxA === -1) idxA = 999;
+        if (idxB === -1) idxB = 999;
+        return idxA - idxB;
+      });
+
+      sortedTeams.forEach(team => {
         const opt = document.createElement("option");
         opt.value = team;
         opt.textContent = team;
