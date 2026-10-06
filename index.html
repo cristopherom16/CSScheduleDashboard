@@ -448,7 +448,7 @@
       let maxDuty = 0;
       let maxBreaks = 0;
       const slotCounts = {};
-      timeSlots.forEach(ts => slotCounts[ts] = { duty: 0, break: 0 });
+      timeSlots.forEach(ts => slotCounts[ts] = { duty: 0, break: 0, off: 0 });
 
       agents.forEach(ag => {
         html += `<tr><td class="agent-col">${ag.name} (${ag.site})</td>`;
@@ -484,6 +484,8 @@
               cellClass = "duty-cell"; label = "ON";
               slotCounts[ts].duty++;
             }
+          } else {
+            slotCounts[ts].off++;
           }
 
           html += `<td class="${cellClass}">${label}</td>`;
@@ -492,13 +494,13 @@
         html += `</tr>`;
       });
 
-      // Total On-Duty Summary Row
-      html += `<tr style="background:#0f172a; font-weight:bold;"><td class="agent-col">TOTAL ON DUTY</td>`;
+      // Total Off-Duty Summary Row
+      html += `<tr style="background:#0f172a; font-weight:bold;"><td class="agent-col">TOTAL OFF DUTY</td>`;
       timeSlots.forEach(ts => {
-        const count = slotCounts[ts].duty;
-        if (count > maxDuty) maxDuty = count;
+        const offCount = slotCounts[ts].off;
+        if (slotCounts[ts].duty > maxDuty) maxDuty = slotCounts[ts].duty;
         if (slotCounts[ts].break > maxBreaks) maxBreaks = slotCounts[ts].break;
-        html += `<td style="color:#10b981;">${count}</td>`;
+        html += `<td style="color:#ef4444;">${offCount}</td>`;
       });
       html += `</tr></tbody></table>`;
 
