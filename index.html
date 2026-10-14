@@ -24,7 +24,8 @@
     body { background-color: var(--bg); color: var(--text); padding: 20px; }
 
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
-    h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+    h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; color: var(--text); }
+    h1 i { color: var(--text); }
     
     .controls-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
     .team-controls-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -96,7 +97,7 @@
 <body>
 
   <header>
-    <h1><i class="fa-solid fa-chart-line"></i> CUSTOMER SUPPORT SCHEDULE DASHBOARD</h1>
+    <h1><i class="fa-solid fa-calendar-days"></i> CUSTOMER SUPPORT SCHEDULE DASHBOARD</h1>
     <div>
       <span id="last-updated" style="font-size: 0.8rem; color: #10b981;"><i class="fa-solid fa-lock"></i> Protected Operations Panel</span>
     </div>
