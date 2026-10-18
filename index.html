@@ -19,10 +19,47 @@
       --onduty: #10b981;
       --offduty: #ef4444;
       --break: #f59e0b;
+      --input-bg: #0b1329;
+      --input-text: #ffffff;
+    }
+
+    /* LIGHT MODE STYLES OVERRIDE */
+    body.light-mode {
+      --bg: #f8fafc;
+      --panel: #ffffff;
+      --border: #d97706;
+      --accent: #d97706;
+      --accent-hover: #b45309;
+      --text: #0f172a;
+      --text-muted: #b45309;
+      --amber: #b45309;
+      --input-bg: #ffffff;
+      --input-text: #0f172a;
+    }
+
+    body.light-mode header,
+    body.light-mode .card,
+    body.light-mode .kpi-card,
+    body.light-mode select,
+    body.light-mode input {
+      background-color: var(--panel) !important;
+      color: var(--text) !important;
+    }
+
+    body.light-mode .grid-table th,
+    body.light-mode .grid-table td.agent-col,
+    body.light-mode table.data-table th {
+      background-color: #f1f5f9 !important;
+      color: #0f172a !important;
+    }
+
+    body.light-mode .off-cell {
+      background-color: #e2e8f0 !important;
+      color: #64748b !important;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg); color: var(--text); padding: 20px; }
+    body { background-color: var(--bg); color: var(--text); padding: 20px; transition: background-color 0.3s, color 0.3s; }
 
     header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
     h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; color: var(--amber); text-transform: uppercase; font-weight: 800; }
@@ -34,8 +71,8 @@
 
     .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; flex-wrap: wrap; gap: 10px; }
 
-    select, button, input { background: #0b1329; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; font-weight: 600; }
-    select option { background: #0b1329; color: #ffffff; }
+    select, button, input { background: var(--input-bg); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; font-size: 0.9rem; outline: none; font-weight: 600; }
+    select option { background: var(--input-bg); color: var(--text); }
     select:focus, input:focus { border-color: var(--amber); }
     button { background: var(--amber); cursor: pointer; font-weight: 600; border: none; transition: background 0.2s; color: #000000; display: inline-flex; align-items: center; gap: 6px; }
     button:hover { background: var(--accent-hover); }
@@ -45,6 +82,28 @@
     .btn-delete-team { background: #ef4444; color: #ffffff; }
     .btn-delete-team:hover { background: #dc2626; }
 
+    /* COMPACT THEME TOGGLE BUTTON BELOW HEADER BADGE */
+    .theme-toggle-btn {
+      margin-top: 6px;
+      float: right;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--amber);
+      color: #000000;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      transition: transform 0.2s, background 0.2s;
+    }
+    .theme-toggle-btn:hover {
+      transform: scale(1.1);
+      background: var(--accent-hover);
+    }
+
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
     .kpi-card { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 15px; text-align: center; }
     .kpi-card .val { font-size: 1.8rem; font-weight: bold; margin-top: 5px; color: var(--amber); }
@@ -53,7 +112,7 @@
     .grid-table { border-collapse: collapse; width: 100%; font-size: 0.75rem; text-align: center; }
     .grid-table th, .grid-table td { border: 1px solid var(--border); padding: 4px; min-width: 28px; text-align: center; }
     .grid-table th { background: #0b1329; position: sticky; top: 0; z-index: 2; color: var(--amber); }
-    .grid-table td.agent-col { text-align: left; font-weight: bold; position: sticky; left: 0; background: var(--panel); z-index: 1; min-width: 140px; color: #ffffff; }
+    .grid-table td.agent-col { text-align: left; font-weight: bold; position: sticky; left: 0; background: var(--panel); z-index: 1; min-width: 140px; color: var(--text); }
 
     /* Heatmap Colors */
     .break-cell { background-color: #78350f !important; color: #fde68a !important; }
@@ -85,7 +144,7 @@
     table.data-table td input { background: transparent; border: 1px solid transparent; color: inherit; padding: 4px; border-radius: 4px; text-align: center; font-weight: 600; }
     table.data-table td.agent-name-cell input { text-align: left; width: calc(100% - 28px); }
     table.data-table td input[readonly] { cursor: default; }
-    table.data-table td input.editing-mode { background: #0b1329 !important; color: #ffffff !important; border-color: var(--amber) !important; }
+    table.data-table td input.editing-mode { background: var(--input-bg) !important; color: var(--input-text) !important; border-color: var(--amber) !important; }
 
     .action-btn-group { display: flex; gap: 6px; justify-content: center; }
     .btn-edit { background: #f59e0b; color: #ffffff; }
@@ -100,8 +159,12 @@
 
   <header>
     <h1><i class="fa-solid fa-calendar-days"></i> CUSTOMER SUPPORT SCHEDULE DASHBOARD</h1>
-    <div>
-      <span id="last-updated" style="font-size: 0.8rem; color: #10b981;"><i class="fa-solid fa-lock"></i> Protected Operations Panel</span>
+    <div style="text-align: right;">
+      <span id="last-updated" style="font-size: 0.8rem; color: #10b981; display: block;"><i class="fa-solid fa-lock"></i> Protected Operations Panel</span>
+      <!-- TOGGLE THEME BUTTON BELOW BADGE -->
+      <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
+        <i id="themeIcon" class="fa-solid fa-sun" style="font-size: 0.85rem;"></i>
+      </button>
     </div>
   </header>
 
@@ -183,6 +246,34 @@
       "LL+ Team",
       "TFX Team"
     ];
+
+    // LIGHT / DARK MODE TOGGLE LOGIC
+    function toggleTheme() {
+      const body = document.body;
+      const icon = document.getElementById('themeIcon');
+      const isLight = body.classList.toggle('light-mode');
+
+      if (isLight) {
+        icon.className = 'fa-solid fa-moon';
+        localStorage.setItem('schedule_dashboard_theme', 'light');
+      } else {
+        icon.className = 'fa-solid fa-sun';
+        localStorage.setItem('schedule_dashboard_theme', 'dark');
+      }
+    }
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('schedule_dashboard_theme') || 'dark';
+      const icon = document.getElementById('themeIcon');
+
+      if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+        if (icon) icon.className = 'fa-solid fa-moon';
+      } else {
+        document.body.classList.remove('light-mode');
+        if (icon) icon.className = 'fa-solid fa-sun';
+      }
+    }
 
     function checkPassword() {
       const input = prompt("Authentication required. Please enter the management password:");
@@ -267,7 +358,6 @@
         saveToStorage();
       }
 
-      // Ordenar respetando el orden definido en TEAM_ORDER y agregando al final los creados manualmente
       const sortedTeams = Object.keys(scheduleData).sort((a, b) => {
         let idxA = TEAM_ORDER.indexOf(a);
         let idxB = TEAM_ORDER.indexOf(b);
@@ -541,7 +631,7 @@
       });
 
       // Total On-Duty Summary Row
-      html += `<tr style="background:#0b1329; font-weight:bold;"><td class="agent-col" style="color:var(--amber);">TOTAL ON DUTY</td>`;
+      html += `<tr style="font-weight:bold;"><td class="agent-col" style="color:var(--amber);">TOTAL ON DUTY</td>`;
       timeSlots.forEach(ts => {
         const count = slotCounts[ts].duty;
         if (count > maxDuty) maxDuty = count;
@@ -556,6 +646,7 @@
     }
 
     // Initialize
+    initTheme();
     populateTeamSelect();
     renderTable();
   </script>
