@@ -21,6 +21,7 @@
       --break: #f59e0b;
       --input-bg: #0b1329;
       --input-text: #ffffff;
+      --modal-overlay: rgba(11, 19, 41, 0.85);
     }
 
     /* LIGHT MODE STYLES OVERRIDE */
@@ -35,6 +36,7 @@
       --amber: #b45309;
       --input-bg: #ffffff;
       --input-text: #0f172a;
+      --modal-overlay: rgba(15, 23, 42, 0.65);
     }
 
     body.light-mode header,
@@ -65,7 +67,7 @@
     h1 { font-size: 1.5rem; display: flex; align-items: center; gap: 10px; color: var(--amber); text-transform: uppercase; font-weight: 800; }
     h1 i { color: var(--amber); }
     
-    .controls-bar { display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
+    .controls-bar { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; align-items: flex-end; }
     .team-controls-group { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
     .card { background-color: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); }
 
@@ -153,6 +155,61 @@
     .btn-save:hover { background: #059669; }
     .btn-delete { background: #ef4444; color: #ffffff; }
     .btn-delete:hover { background: #dc2626; }
+
+    /* --- CENTERED POPUP MODAL STYLES --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: var(--modal-overlay);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(3px);
+    }
+    .modal-card {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      width: 360px;
+      max-width: 90%;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      text-align: center;
+    }
+    .modal-card h3 {
+      color: var(--amber);
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+    .modal-card input {
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 10px;
+      font-size: 1rem;
+      text-align: center;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+    .modal-actions button {
+      padding: 8px 18px;
+      border-radius: 6px;
+    }
+    .btn-modal-cancel {
+      background: #64748b;
+      color: #ffffff;
+    }
+    .btn-modal-cancel:hover {
+      background: #475569;
+    }
   </style>
 </head>
 <body>
@@ -178,6 +235,20 @@
         <button class="btn-create-team" onclick="createNewTeam()"><i class="fa-solid fa-folder-plus"></i> Create New Team</button>
         <button class="btn-delete-team" onclick="deleteTeam()"><i class="fa-solid fa-trash-can"></i> Delete Team</button>
       </div>
+    </div>
+
+    <!-- SITE / BRANCH FILTER -->
+    <div>
+      <label style="font-size: 0.85rem; color: var(--amber); display: block; margin-bottom: 4px; font-weight: 600;"><i class="fa-solid fa-filter"></i> Filter by Site / Branch:</label>
+      <select id="site-filter-select" onchange="applySiteFilter()">
+        <option value="ALL">ALL SITES / BRANCHES</option>
+        <option value="GUA">Guatemala (GUA)</option>
+        <option value="MX">Mexico (MX)</option>
+        <option value="COL">Colombia (COL)</option>
+        <option value="PAN">Panama (PAN)</option>
+        <option value="JAM">Jamaica (JAM)</option>
+        <option value="USA">United States (USA)</option>
+      </select>
     </div>
   </div>
 
@@ -233,6 +304,18 @@
     </div>
   </div>
 
+  <!-- CENTERED POPUP MODAL HTML -->
+  <div class="modal-overlay" id="password-modal">
+    <div class="modal-card">
+      <h3 id="modal-prompt-text">Please enter your Management Password</h3>
+      <input type="password" id="modal-password-input" placeholder="Password...">
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closePasswordModal(false)">Cancel</button>
+        <button onclick="closePasswordModal(true)">Submit</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const AUTH_PASSWORD = "management2026!";
     const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA";
@@ -246,6 +329,52 @@
       "LL+ Team",
       "TFX Team"
     ];
+
+    let passwordModalCallback = null;
+
+    // CENTERED POPUP MODAL LOGIC
+    function requestPassword(promptText, callback) {
+      document.getElementById('modal-prompt-text').innerText = promptText;
+      const input = document.getElementById('modal-password-input');
+      input.value = "";
+      document.getElementById('password-modal').style.display = 'flex';
+      input.focus();
+      passwordModalCallback = callback;
+    }
+
+    function closePasswordModal(isSubmitted) {
+      const input = document.getElementById('modal-password-input');
+      const val = input.value;
+      document.getElementById('password-modal').style.display = 'none';
+
+      if (passwordModalCallback) {
+        if (isSubmitted) {
+          passwordModalCallback(val);
+        } else {
+          passwordModalCallback(null);
+        }
+        passwordModalCallback = null;
+      }
+    }
+
+    document.getElementById('modal-password-input').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        closePasswordModal(true);
+      }
+    });
+
+    function checkPassword(callback) {
+      requestPassword("Please enter your Management Password", function(inputPassword) {
+        if (inputPassword === AUTH_PASSWORD) {
+          callback(true);
+        } else if (inputPassword !== null) {
+          alert("Incorrect password. Action denied.");
+          callback(false);
+        } else {
+          callback(false);
+        }
+      });
+    }
 
     // LIGHT / DARK MODE TOGGLE LOGIC
     function toggleTheme() {
@@ -272,16 +401,6 @@
       } else {
         document.body.classList.remove('light-mode');
         if (icon) icon.className = 'fa-solid fa-sun';
-      }
-    }
-
-    function checkPassword() {
-      const input = prompt("Authentication required. Please enter the management password:");
-      if (input === AUTH_PASSWORD) {
-        return true;
-      } else {
-        alert("Incorrect password. Action denied.");
-        return false;
       }
     }
 
@@ -333,6 +452,7 @@
     let scheduleData = loadFromStorage();
     let activeTeam = localStorage.getItem(ACTIVE_TEAM_KEY) || "OS Phones Team";
     let draggedIndex = null;
+    let selectedSiteFilter = "ALL";
 
     function saveToStorage() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduleData));
@@ -395,12 +515,30 @@
       }
     }
 
+    function applySiteFilter() {
+      selectedSiteFilter = document.getElementById("site-filter-select").value;
+      renderTable();
+    }
+
+    function getFilteredAgents() {
+      const agents = scheduleData[activeTeam] || [];
+      if (selectedSiteFilter === "ALL") {
+        return agents;
+      }
+      return agents.filter(ag => (ag.site || "").trim().toUpperCase() === selectedSiteFilter);
+    }
+
     function renderTable() {
       const tbody = document.getElementById("schedule-tbody");
       tbody.innerHTML = "";
       const agents = scheduleData[activeTeam] || [];
 
       agents.forEach((ag, idx) => {
+        // Apply site filter to table rows visibility
+        if (selectedSiteFilter !== "ALL" && (ag.site || "").trim().toUpperCase() !== selectedSiteFilter) {
+          return;
+        }
+
         const tr = document.createElement("tr");
         tr.id = `row-${idx}`;
         const branchClass = getBranchClass(ag.site);
@@ -467,29 +605,37 @@
     }
 
     function enableRowEdit(idx) {
-      if (!checkPassword()) return;
+      checkPassword(function(passed) {
+        if (!passed) return;
 
-      const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
-      fields.forEach(f => {
-        const input = document.getElementById(`input-${idx}-${f}`);
-        input.removeAttribute('readonly');
-        input.classList.add('editing-mode');
+        const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+        fields.forEach(f => {
+          const input = document.getElementById(`input-${idx}-${f}`);
+          if (input) {
+            input.removeAttribute('readonly');
+            input.classList.add('editing-mode');
+          }
+        });
+
+        const btnGroup = document.getElementById(`btn-group-${idx}`);
+        if (btnGroup) {
+          btnGroup.innerHTML = `
+            <button class="btn-save" onclick="saveRowEdit(${idx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
+            <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+          `;
+        }
       });
-
-      const btnGroup = document.getElementById(`btn-group-${idx}`);
-      btnGroup.innerHTML = `
-        <button class="btn-save" onclick="saveRowEdit(${idx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
-        <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
-      `;
     }
 
     function saveRowEdit(idx) {
       const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
       fields.forEach(f => {
         const input = document.getElementById(`input-${idx}-${f}`);
-        input.setAttribute('readonly', 'readonly');
-        input.classList.remove('editing-mode');
-        scheduleData[activeTeam][idx][f] = input.value;
+        if (input) {
+          input.setAttribute('readonly', 'readonly');
+          input.classList.remove('editing-mode');
+          scheduleData[activeTeam][idx][f] = input.value;
+        }
       });
 
       saveToStorage();
@@ -497,72 +643,85 @@
     }
 
     function addAgentRow() {
-      if (!checkPassword()) return;
+      checkPassword(function(passed) {
+        if (!passed) return;
 
-      if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
-      const newIdx = scheduleData[activeTeam].length;
-      scheduleData[activeTeam].push({ name: "New Agent", site: "GUA", in: "08:00", b1: "10:00", lu: "12:00-13:00", b2: "15:00", out: "17:00" });
-      saveToStorage();
-      renderTable();
-      
-      const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
-      fields.forEach(f => {
-        const input = document.getElementById(`input-${newIdx}-${f}`);
-        if(input) {
-          input.removeAttribute('readonly');
-          input.classList.add('editing-mode');
+        if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
+        const defaultSite = selectedSiteFilter !== "ALL" ? selectedSiteFilter : "GUA";
+        const newIdx = scheduleData[activeTeam].length;
+        scheduleData[activeTeam].push({ name: "New Agent", site: defaultSite, in: "08:00", b1: "10:00", lu: "12:00-13:00", b2: "15:00", out: "17:00" });
+        saveToStorage();
+        renderTable();
+        
+        const fields = ['name', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+        fields.forEach(f => {
+          const input = document.getElementById(`input-${newIdx}-${f}`);
+          if(input) {
+            input.removeAttribute('readonly');
+            input.classList.add('editing-mode');
+          }
+        });
+        const btnGroup = document.getElementById(`btn-group-${newIdx}`);
+        if(btnGroup) {
+          btnGroup.innerHTML = `
+            <button class="btn-save" onclick="saveRowEdit(${newIdx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
+            <button class="btn-delete" onclick="removeAgent(${newIdx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+          `;
         }
       });
-      const btnGroup = document.getElementById(`btn-group-${newIdx}`);
-      if(btnGroup) {
-        btnGroup.innerHTML = `
-          <button class="btn-save" onclick="saveRowEdit(${newIdx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
-          <button class="btn-delete" onclick="removeAgent(${newIdx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
-        `;
-      }
     }
 
     function removeAgent(idx) {
-      if (!checkPassword()) return;
+      checkPassword(function(passed) {
+        if (!passed) return;
 
-      scheduleData[activeTeam].splice(idx, 1);
-      saveToStorage();
-      renderTable();
+        scheduleData[activeTeam].splice(idx, 1);
+        saveToStorage();
+        renderTable();
+      });
     }
 
     function createNewTeam() {
-      if (!checkPassword()) return;
+      checkPassword(function(passed) {
+        if (!passed) return;
 
-      const teamName = prompt("Enter the name for the new team:");
-      if (teamName && teamName.trim() !== "") {
-        const cleanName = teamName.trim();
-        if (!scheduleData[cleanName]) {
-          scheduleData[cleanName] = [];
+        requestPassword("Please enter your Management Password", function() {
+          // Additional text prompt inside custom modal sequence
+        });
+
+        const teamName = prompt("Enter the name for the new team:");
+        if (teamName && teamName.trim() !== "") {
+          const cleanName = teamName.trim();
+          if (!scheduleData[cleanName]) {
+            scheduleData[cleanName] = [];
+          }
+          activeTeam = cleanName;
+          saveToStorage();
+          populateTeamSelect();
+          renderTable();
         }
-        activeTeam = cleanName;
-        saveToStorage();
-        populateTeamSelect();
-        renderTable();
-      }
+      });
     }
 
     function deleteTeam() {
-      if (!checkPassword()) return;
+      checkPassword(function(passed) {
+        if (!passed) return;
 
-      const teams = Object.keys(scheduleData);
-      if (teams.length <= 1) {
-        alert("Cannot delete the only remaining team.");
-        return;
-      }
+        const teams = Object.keys(scheduleData);
+        if (teams.length <= 1) {
+          alert("Cannot delete the only remaining team.");
+          return;
+        }
 
-      if (confirm(`Are you sure you want to delete the team "${activeTeam}"?`)) {
-        delete scheduleData[activeTeam];
-        const remainingTeams = Object.keys(scheduleData);
-        activeTeam = remainingTeams[0];
-        saveToStorage();
-        populateTeamSelect();
-        renderTable();
-      }
+        if (confirm(`Are you sure you want to delete the team "${activeTeam}"?`)) {
+          delete scheduleData[activeTeam];
+          const remainingTeams = Object.keys(scheduleData);
+          activeTeam = remainingTeams[0];
+          saveToStorage();
+          populateTeamSelect();
+          renderTable();
+        }
+      });
     }
 
     function switchTeam() {
@@ -575,7 +734,7 @@
 
     function renderHeatmap() {
       const wrap = document.getElementById("heatmap-wrap");
-      const agents = scheduleData[activeTeam] || [];
+      const agents = getFilteredAgents();
 
       document.getElementById("kpi-total-agents").innerText = agents.length;
 
