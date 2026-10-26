@@ -81,6 +81,8 @@
 
     .btn-create-team { background: #10b981; color: #ffffff; }
     .btn-create-team:hover { background: #059669; }
+    .btn-edit-team { background: #f59e0b; color: #ffffff; }
+    .btn-edit-team:hover { background: #d97706; }
     .btn-delete-team { background: #ef4444; color: #ffffff; }
     .btn-delete-team:hover { background: #dc2626; }
 
@@ -210,6 +212,27 @@
     .btn-modal-cancel:hover {
       background: #475569;
     }
+
+    /* FLOATING BOTTOM EXCEL DOWNLOAD BUTTON */
+    .btn-download-excel {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #10b981;
+      color: #ffffff;
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      z-index: 1000;
+      opacity: 0.85;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .btn-download-excel:hover {
+      opacity: 1;
+      transform: translateY(-2px);
+      background: #059669;
+    }
   </style>
 </head>
 <body>
@@ -233,6 +256,7 @@
           <!-- Options populated dynamically -->
         </select>
         <button class="btn-create-team" onclick="createNewTeam()"><i class="fa-solid fa-folder-plus"></i> Create New Team</button>
+        <button class="btn-edit-team" onclick="editTeamName()"><i class="fa-solid fa-pen-to-square"></i> Edit Team Name</button>
         <button class="btn-delete-team" onclick="deleteTeam()"><i class="fa-solid fa-trash-can"></i> Delete Team</button>
       </div>
     </div>
@@ -315,6 +339,11 @@
       </div>
     </div>
   </div>
+
+  <!-- SMALL BOTTOM CORNER BUTTON FOR EXCEL EXPORT -->
+  <button class="btn-download-excel" onclick="downloadExcelReport()" title="Download current schedule report in Excel format">
+    <i class="fa-solid fa-file-excel"></i> Download Excel Report
+  </button>
 
   <script>
     const AUTH_PASSWORD = "management2026!";
@@ -685,16 +714,41 @@
       checkPassword(function(passed) {
         if (!passed) return;
 
-        requestPassword("Please enter your Management Password", function() {
-          // Additional text prompt inside custom modal sequence
-        });
-
         const teamName = prompt("Enter the name for the new team:");
         if (teamName && teamName.trim() !== "") {
           const cleanName = teamName.trim();
           if (!scheduleData[cleanName]) {
             scheduleData[cleanName] = [];
           }
+          activeTeam = cleanName;
+          saveToStorage();
+          populateTeamSelect();
+          renderTable();
+        }
+      });
+    }
+
+    function editTeamName() {
+      checkPassword(function(passed) {
+        if (!passed) return;
+
+        const currentName = activeTeam;
+        const newTeamName = prompt("Enter new name for team '" + currentName + "':", currentName);
+        if (newTeamName && newTeamName.trim() !== "" && newTeamName.trim() !== currentName) {
+          const cleanName = newTeamName.trim();
+          if (scheduleData[cleanName]) {
+            alert("A team with this name already exists.");
+            return;
+          }
+
+          scheduleData[cleanName] = scheduleData[currentName] || [];
+          delete scheduleData[currentName];
+
+          const orderIdx = TEAM_ORDER.indexOf(currentName);
+          if (orderIdx !== -1) {
+            TEAM_ORDER[orderIdx] = cleanName;
+          }
+
           activeTeam = cleanName;
           saveToStorage();
           populateTeamSelect();
@@ -802,6 +856,40 @@
       wrap.innerHTML = html;
       document.getElementById("kpi-peak-staffing").innerText = maxDuty + " Agents";
       document.getElementById("kpi-max-breaks").innerText = maxBreaks + " Agents";
+    }
+
+    function downloadExcelReport() {
+      const agents = getFilteredAgents();
+      if (!agents || agents.length === 0) {
+        alert("No agent records available to export for the selected filters.");
+        return;
+      }
+
+      let csvContent = "\uFEFFTeam,Agent Name,Site / Branch,Clock In,Break 1,Lunch,Break 2,Clock Out\n";
+      agents.forEach(ag => {
+        const row = [
+          `"${activeTeam}"`,
+          `"${ag.name || ''}"`,
+          `"${ag.site || ''}"`,
+          `"${ag.in || ''}"`,
+          `"${ag.b1 || ''}"`,
+          `"${ag.lu || ''}"`,
+          `"${ag.b2 || ''}"`,
+          `"${ag.out || ''}"`
+        ];
+        csvContent += row.join(",") + "\n";
+      });
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const safeTeamName = activeTeam.replace(/[^a-z0-9_-]/gi, '_');
+      link.setAttribute("href", url);
+      link.setAttribute("download", `${safeTeamName}_schedule_report.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
     }
 
     // Initialize
