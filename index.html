@@ -85,6 +85,8 @@
     .btn-edit-team:hover { background: #d97706; }
     .btn-delete-team { background: #ef4444; color: #ffffff; }
     .btn-delete-team:hover { background: #dc2626; }
+    .btn-move-team { background: #6366f1; color: #ffffff; padding: 8px 10px; }
+    .btn-move-team:hover { background: #4f46e5; }
 
     /* COMPACT THEME TOGGLE BUTTON BELOW HEADER BADGE */
     .theme-toggle-btn {
@@ -137,6 +139,7 @@
     tr.branch-pan { background-color: #fecaca !important; color: #000000 !important; }
     tr.branch-jam { background-color: #fef08a !important; color: #000000 !important; }
     tr.branch-usa { background-color: #ffffff !important; color: #1e3a8a !important; }
+    tr.branch-phi { background-color: #e9d5ff !important; color: #000000 !important; }
 
     /* Drag & Drop Styles */
     tr.draggable-row { cursor: move; }
@@ -255,6 +258,8 @@
         <select id="team-select" onchange="switchTeam()">
           <!-- Options populated dynamically -->
         </select>
+        <button class="btn-move-team" onclick="moveTeamOrder(-1)" title="Move Team Up"><i class="fa-solid fa-arrow-up"></i></button>
+        <button class="btn-move-team" onclick="moveTeamOrder(1)" title="Move Team Down"><i class="fa-solid fa-arrow-down"></i></button>
         <button class="btn-create-team" onclick="createNewTeam()"><i class="fa-solid fa-folder-plus"></i> Create New Team</button>
         <button class="btn-edit-team" onclick="editTeamName()"><i class="fa-solid fa-pen-to-square"></i> Edit Team Name</button>
         <button class="btn-delete-team" onclick="deleteTeam()"><i class="fa-solid fa-trash-can"></i> Delete Team</button>
@@ -272,6 +277,7 @@
         <option value="PAN">Panama (PAN)</option>
         <option value="JAM">Jamaica (JAM)</option>
         <option value="USA">United States (USA)</option>
+        <option value="PHI">Philippines (PHI)</option>
       </select>
     </div>
   </div>
@@ -349,8 +355,9 @@
     const AUTH_PASSWORD = "management2026!";
     const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA";
     const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM";
+    const TEAM_ORDER_KEY = "CS_SUPPORT_TEAM_ORDER";
 
-    const TEAM_ORDER = [
+    let TEAM_ORDER = [
       "OS Phones Team",
       "OS Cases Team",
       "ELD Team",
@@ -486,9 +493,14 @@
     function saveToStorage() {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(scheduleData));
       localStorage.setItem(ACTIVE_TEAM_KEY, activeTeam);
+      localStorage.setItem(TEAM_ORDER_KEY, JSON.stringify(TEAM_ORDER));
     }
 
     function loadFromStorage() {
+      const savedOrder = localStorage.getItem(TEAM_ORDER_KEY);
+      if (savedOrder) {
+        try { TEAM_ORDER = JSON.parse(savedOrder); } catch(e) {}
+      }
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         try { return JSON.parse(saved); } catch(e) {}
@@ -507,6 +519,13 @@
         saveToStorage();
       }
 
+      // Ensure all current teams are present in TEAM_ORDER array
+      keys.forEach(k => {
+        if (!TEAM_ORDER.includes(k)) {
+          TEAM_ORDER.push(k);
+        }
+      });
+
       const sortedTeams = Object.keys(scheduleData).sort((a, b) => {
         let idxA = TEAM_ORDER.indexOf(a);
         let idxB = TEAM_ORDER.indexOf(b);
@@ -521,6 +540,33 @@
         opt.textContent = team;
         if (team === activeTeam) opt.selected = true;
         select.appendChild(opt);
+      });
+    }
+
+    function moveTeamOrder(direction) {
+      checkPassword(function(passed) {
+        if (!passed) return;
+
+        const select = document.getElementById("team-select");
+        const currentTeams = Array.from(select.options).map(o => o.value);
+        const currentIndex = currentTeams.indexOf(activeTeam);
+        const targetIndex = currentIndex + direction;
+
+        if (targetIndex >= 0 && targetIndex < currentTeams.length) {
+          const targetTeam = currentTeams[targetIndex];
+          
+          let idxA = TEAM_ORDER.indexOf(activeTeam);
+          let idxB = TEAM_ORDER.indexOf(targetTeam);
+
+          if (idxA !== -1 && idxB !== -1) {
+            const temp = TEAM_ORDER[idxA];
+            TEAM_ORDER[idxA] = TEAM_ORDER[idxB];
+            TEAM_ORDER[idxB] = temp;
+          }
+
+          saveToStorage();
+          populateTeamSelect();
+        }
       });
     }
 
@@ -540,6 +586,7 @@
         case 'PAN': return 'branch-pan';
         case 'JAM': return 'branch-jam';
         case 'USA': return 'branch-usa';
+        case 'PHI': return 'branch-phi';
         default: return '';
       }
     }
