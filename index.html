@@ -447,7 +447,7 @@
       let end = endHour * 60;
 
       if (end <= start) {
-        // Cruza la medianoche (ej. 16:00 a 07:00 del día siguiente)
+        // Cruza la medianoche (16:00 a 07:00 del día siguiente)
         for (let m = start; m < 24 * 60; m += 15) {
           let hrs = Math.floor(m / 60);
           let mins = m % 60;
@@ -461,7 +461,7 @@
           let mins = m % 60;
           slots.push({
             timeStr: `${hrs < 10 ? '0' + hrs : hrs}:${mins < 10 ? '0' + mins : mins}`,
-            absMin: m + (24 * 60) // Se le añaden 1440 mins para tratarse como el día siguiente
+            absMin: m + (24 * 60) // 1440 mins agregados para indicar el día siguiente
           });
         }
       } else {
@@ -527,10 +527,18 @@
         try { TEAM_ORDER = JSON.parse(savedOrder); } catch(e) {}
       }
       const saved = localStorage.getItem(STORAGE_KEY);
+      let data = null;
       if (saved) {
-        try { return JSON.parse(saved); } catch(e) {}
+        try { data = JSON.parse(saved); } catch(e) {}
       }
-      return JSON.parse(JSON.stringify(defaultData));
+      if (!data) {
+        data = JSON.parse(JSON.stringify(defaultData));
+      }
+      // Garantizar que 'After Hour Team' siempre exista con datos validos
+      if (!data["After Hour Team"] || data["After Hour Team"].length === 0) {
+        data["After Hour Team"] = JSON.parse(JSON.stringify(defaultData["After Hour Team"]));
+      }
+      return data;
     }
 
     function populateTeamSelect() {
@@ -771,7 +779,12 @@
         if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
         const defaultSite = selectedSiteFilter !== "ALL" ? selectedSiteFilter : "GUA";
         const newIdx = scheduleData[activeTeam].length;
-        scheduleData[activeTeam].push({ name: "New Agent", site: defaultSite, in: "08:00", b1: "10:00", lu: "12:00-13:00", b2: "15:00", out: "17:00" });
+        
+        const isNightShift = (activeTeam === "After Hour Team");
+        const defaultIn = isNightShift ? "16:00" : "08:00";
+        const defaultOut = isNightShift ? "01:00" : "17:00";
+        
+        scheduleData[activeTeam].push({ name: "New Agent", site: defaultSite, in: defaultIn, b1: "", lu: "", b2: "", out: defaultOut });
         saveToStorage();
         renderTable();
         
