@@ -299,7 +299,7 @@
 
   <!-- Heatmap Card -->
   <div class="card">
-    <h3 style="color: var(--amber);"><i class="fa-solid fa-fire"></i> 15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)</h3>
+    <h3 style="color: var(--amber);"><i class="fa-solid fa-fire"></i> <span id="heatmap-title">15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)</span></h3>
     <p style="font-size: 0.8rem; color: #b0bec5; margin-bottom: 12px; margin-top: 4px;">
       Green = On Duty (ON), Brown = Break (BR), Pink/Red = Lunch (LU).
     </p>
@@ -363,7 +363,8 @@
       "ELD Team",
       "INS Team",
       "LL+ Team",
-      "TFX Team"
+      "TFX Team",
+      "After Hour Team"
     ];
 
     let passwordModalCallback = null;
@@ -440,21 +441,32 @@
       }
     }
 
-    function generateTimeSlots() {
+    function generateTimeSlots(startHour = 6, endHour = 22) {
       const slots = [];
-      let start = 6 * 60;
-      let end = 22 * 60;
-      for (let m = start; m <= end; m += 15) {
-        let hrs = Math.floor(m / 60);
-        let mins = m % 60;
-        let hh = hrs < 10 ? '0' + hrs : hrs;
-        let mm = mins < 10 ? '0' + mins : mins;
-        slots.push(`${hh}:${mm}`);
+      let start = startHour * 60;
+      let end = endHour * 60;
+
+      if (end < start) {
+        // Cruza la medianoche (ej. 16:00 a 04:00 del día siguiente)
+        for (let m = start; m < 24 * 60; m += 15) {
+          let hrs = Math.floor(m / 60);
+          let mins = m % 60;
+          slots.push(`${hrs < 10 ? '0' + hrs : hrs}:${mins < 10 ? '0' + mins : mins}`);
+        }
+        for (let m = 0; m <= end; m += 15) {
+          let hrs = Math.floor(m / 60);
+          let mins = m % 60;
+          slots.push(`${hrs < 10 ? '0' + hrs : hrs}:${mins < 10 ? '0' + mins : mins}`);
+        }
+      } else {
+        for (let m = start; m <= end; m += 15) {
+          let hrs = Math.floor(m / 60);
+          let mins = m % 60;
+          slots.push(`${hrs < 10 ? '0' + hrs : hrs}:${mins < 10 ? '0' + mins : mins}`);
+        }
       }
       return slots;
     }
-
-    const timeSlots = generateTimeSlots();
 
     const defaultData = {
       "OS Phones Team": [
@@ -482,6 +494,10 @@
       "TFX Team": [
         { name: "Fernando Daniel Ramirez", site: "MX", in: "09:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "17:00" },
         { name: "Maria Fernanda Saucedo", site: "MX", in: "10:00", b1: "11:00", lu: "12:30-13:30", b2: "14:30", out: "18:00" }
+      ],
+      "After Hour Team": [
+        { name: "Night Agent 1", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:00", out: "01:00" },
+        { name: "Night Agent 2", site: "GUA", in: "19:00", b1: "21:00", lu: "23:00-00:00", b2: "02:00", out: "04:00" }
       ]
     };
 
@@ -574,6 +590,14 @@
       if (!tStr || !tStr.includes(':')) return null;
       const [h, m] = tStr.trim().split(':').map(Number);
       return h * 60 + m;
+    }
+
+    function isTimeInShift(slotM, startM, endM) {
+      if (startM === null || endM === null) return false;
+      if (endM < startM) {
+        return slotM >= startM || slotM < endM;
+      }
+      return slotM >= startM && slotM < endM;
     }
 
     function getBranchClass(siteCode) {
@@ -839,14 +863,24 @@
 
       document.getElementById("kpi-total-agents").innerText = agents.length;
 
+      // SOLO EL 'After Hour Team' USARÁ EL HORARIO DE 16:00 A 04:00 (Siguiente día)
+      let timeSlotsForTeam;
+      if (activeTeam === "After Hour Team") {
+        timeSlotsForTeam = generateTimeSlots(16, 4);
+        document.getElementById("heatmap-title").innerText = "15-Minute Coverage Heatmap (4:00 PM – 4:00 AM Next Day)";
+      } else {
+        timeSlotsForTeam = generateTimeSlots(6, 22);
+        document.getElementById("heatmap-title").innerText = "15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)";
+      }
+
       let html = `<table class="grid-table"><thead><tr><th class="agent-col">Agent Name</th>`;
-      timeSlots.forEach(ts => { html += `<th>${ts}</th>`; });
+      timeSlotsForTeam.forEach(ts => { html += `<th>${ts}</th>`; });
       html += `</tr></thead><tbody>`;
 
       let maxDuty = 0;
       let maxBreaks = 0;
       const slotCounts = {};
-      timeSlots.forEach(ts => slotCounts[ts] = { duty: 0, break: 0 });
+      timeSlotsForTeam.forEach(ts => slotCounts[ts] = { duty: 0, break: 0 });
 
       agents.forEach(ag => {
         html += `<tr><td class="agent-col">${ag.name} (${ag.site})</td>`;
@@ -863,19 +897,19 @@
           luEnd = timeToMinutes(parts[1]);
         }
 
-        timeSlots.forEach(ts => {
+        timeSlotsForTeam.forEach(ts => {
           const slotM = timeToMinutes(ts);
           let cellClass = "off-cell";
           let label = "";
 
-          if (inM !== null && outM !== null && slotM >= inM && slotM < outM) {
+          if (isTimeInShift(slotM, inM, outM)) {
             if (b1M !== null && slotM === b1M) {
               cellClass = "break-cell"; label = "BR";
               slotCounts[ts].break++;
             } else if (b2M !== null && slotM === b2M) {
               cellClass = "break-cell"; label = "BR";
               slotCounts[ts].break++;
-            } else if (luStart !== null && luEnd !== null && slotM >= luStart && slotM < luEnd) {
+            } else if (isTimeInShift(slotM, luStart, luEnd)) {
               cellClass = "lunch-cell"; label = "LU";
               slotCounts[ts].break++;
             } else {
@@ -892,7 +926,7 @@
 
       // Total On-Duty Summary Row
       html += `<tr style="font-weight:bold;"><td class="agent-col" style="color:var(--amber);">TOTAL ON DUTY</td>`;
-      timeSlots.forEach(ts => {
+      timeSlotsForTeam.forEach(ts => {
         const count = slotCounts[ts].duty;
         if (count > maxDuty) maxDuty = count;
         if (slotCounts[ts].break > maxBreaks) maxBreaks = slotCounts[ts].break;
