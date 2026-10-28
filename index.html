@@ -148,7 +148,9 @@
     .drag-handle:active { cursor: grabbing; }
 
     /* Input Styling for centered values */
-    table.data-table td input { background: transparent; border: 1px solid transparent; color: inherit; padding: 4px; border-radius: 4px; text-align: center; font-weight: 600; }
+    table.data-table td input, table.data-table td select.task-select { background: transparent; border: 1px solid transparent; color: inherit; padding: 4px; border-radius: 4px; text-align: center; font-weight: 600; }
+    table.data-table td select.task-select { pointer-events: none; -webkit-appearance: none; -moz-appearance: none; appearance: none; text-align-last: center; }
+    table.data-table td select.task-select.editing-mode { pointer-events: auto; background: var(--input-bg) !important; color: var(--input-text) !important; border-color: var(--amber) !important; -webkit-appearance: listbox; -moz-appearance: listbox; appearance: listbox; }
     table.data-table td.agent-name-cell input { text-align: left; width: calc(100% - 28px); }
     table.data-table td input[readonly] { cursor: default; }
     table.data-table td input.editing-mode { background: var(--input-bg) !important; color: var(--input-text) !important; border-color: var(--amber) !important; }
@@ -320,6 +322,7 @@
         <thead>
           <tr>
             <th style="text-align: left;">Agent Name</th>
+            <th>Task</th>
             <th>Site / Branch</th>
             <th>Clock In</th>
             <th>Break 1</th>
@@ -353,9 +356,11 @@
 
   <script>
     const AUTH_PASSWORD = "management2026!";
-    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA_V2";
+    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA_V3";
     const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM";
     const TEAM_ORDER_KEY = "CS_SUPPORT_TEAM_ORDER";
+
+    const TASK_OPTIONS = ["Cases", "Phones", "LL+", "TFX", "After Hours"];
 
     let TEAM_ORDER = [
       "OS Phones Team",
@@ -479,34 +484,34 @@
 
     const defaultData = {
       "OS Phones Team": [
-        { name: "Lelburn Gordon", site: "PAN", in: "05:00", b1: "07:30", lu: "10:30-11:00", b2: "12:30", out: "14:30" },
-        { name: "Dean Spencer", site: "PAN", in: "05:00", b1: "07:45", lu: "10:00-10:30", b2: "12:45", out: "14:30" },
-        { name: "Stephanie Temple", site: "PAN", in: "06:00", b1: "08:45", lu: "11:00-11:30", b2: "13:45", out: "15:30" },
-        { name: "Shanique Kelly", site: "JAM", in: "06:00", b1: "08:00", lu: "11:15-12:00", b2: "", out: "15:00" },
-        { name: "Ryan Barber", site: "USA", in: "07:00", b1: "", lu: "14:00-15:00", b2: "", out: "16:30" }
+        { name: "Lelburn Gordon", task: "Phones", site: "PAN", in: "05:00", b1: "07:30", lu: "10:30-11:00", b2: "12:30", out: "14:30" },
+        { name: "Dean Spencer", task: "Phones", site: "PAN", in: "05:00", b1: "07:45", lu: "10:00-10:30", b2: "12:45", out: "14:30" },
+        { name: "Stephanie Temple", task: "Phones", site: "PAN", in: "06:00", b1: "08:45", lu: "11:00-11:30", b2: "13:45", out: "15:30" },
+        { name: "Shanique Kelly", task: "Phones", site: "JAM", in: "06:00", b1: "08:00", lu: "11:15-12:00", b2: "", out: "15:00" },
+        { name: "Ryan Barber", task: "Phones", site: "USA", in: "07:00", b1: "", lu: "14:00-15:00", b2: "", out: "16:30" }
       ],
       "OS Cases Team": [
-        { name: "Emely Hernandez", site: "GUA", in: "06:00", b1: "08:00", lu: "10:45-11:45", b2: "13:45", out: "15:00" },
-        { name: "Pablo Saquilmer", site: "GUA", in: "07:00", b1: "10:00", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
-        { name: "Diana Orozco", site: "GUA", in: "10:00", b1: "12:00", lu: "16:45-17:45", b2: "15:00", out: "18:30" },
-        { name: "Lucia Herrera", site: "GUA", in: "07:00", b1: "08:45", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
-        { name: "Fernando Garcia", site: "MX", in: "07:00", b1: "09:15", lu: "11:45-12:45", b2: "14:15", out: "16:00" },
-        { name: "Emilia Chajon", site: "GUA", in: "08:00", b1: "09:45", lu: "12:15-12:30", b2: "14:45", out: "16:15" },
-        { name: "Alejandra Manco", site: "COL", in: "07:00", b1: "07:45", lu: "12:15-13:15", b2: "14:00", out: "15:30" },
-        { name: "Galilea Gutierrez", site: "MX", in: "08:00", b1: "10:15", lu: "13:30-14:30", b2: "15:45", out: "16:30" },
-        { name: "Jorge Saban", site: "GUA", in: "08:30", b1: "10:30", lu: "14:45-15:45", b2: "13:15", out: "17:15" },
-        { name: "Rudy Herrera", site: "GUA", in: "12:00", b1: "13:30", lu: "17:30-18:30", b2: "16:00", out: "18:30" }
+        { name: "Emely Hernandez", task: "Cases", site: "GUA", in: "06:00", b1: "08:00", lu: "10:45-11:45", b2: "13:45", out: "15:00" },
+        { name: "Pablo Saquilmer", task: "Cases", site: "GUA", in: "07:00", b1: "10:00", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
+        { name: "Diana Orozco", task: "Cases", site: "GUA", in: "10:00", b1: "12:00", lu: "16:45-17:45", b2: "15:00", out: "18:30" },
+        { name: "Lucia Herrera", task: "Cases", site: "GUA", in: "07:00", b1: "08:45", lu: "12:30-13:30", b2: "14:15", out: "16:00" },
+        { name: "Fernando Garcia", task: "Cases", site: "MX", in: "07:00", b1: "09:15", lu: "11:45-12:45", b2: "14:15", out: "16:00" },
+        { name: "Emilia Chajon", task: "Cases", site: "GUA", in: "08:00", b1: "09:45", lu: "12:15-12:30", b2: "14:45", out: "16:15" },
+        { name: "Alejandra Manco", task: "Cases", site: "COL", in: "07:00", b1: "07:45", lu: "12:15-13:15", b2: "14:00", out: "15:30" },
+        { name: "Galilea Gutierrez", task: "Cases", site: "MX", in: "08:00", b1: "10:15", lu: "13:30-14:30", b2: "15:45", out: "16:30" },
+        { name: "Jorge Saban", task: "Cases", site: "GUA", in: "08:30", b1: "10:30", lu: "14:45-15:45", b2: "13:15", out: "17:15" },
+        { name: "Rudy Herrera", task: "Cases", site: "GUA", in: "12:00", b1: "13:30", lu: "17:30-18:30", b2: "16:00", out: "18:30" }
       ],
       "ELD Team": [],
       "INS Team": [],
       "LL+ Team": [],
       "TFX Team": [
-        { name: "Fernando Daniel Ramirez", site: "MX", in: "09:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "17:00" },
-        { name: "Maria Fernanda Saucedo", site: "MX", in: "10:00", b1: "11:00", lu: "12:30-13:30", b2: "14:30", out: "18:00" }
+        { name: "Fernando Daniel Ramirez", task: "TFX", site: "MX", in: "09:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "17:00" },
+        { name: "Maria Fernanda Saucedo", task: "TFX", site: "MX", in: "10:00", b1: "11:00", lu: "12:30-13:30", b2: "14:30", out: "18:00" }
       ],
       "After Hour Team": [
-        { name: "Night Agent 1", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:00", out: "01:00" },
-        { name: "Night Agent 2", site: "GUA", in: "22:00", b1: "00:00", lu: "02:00-03:00", b2: "05:00", out: "07:00" }
+        { name: "Night Agent 1", task: "After Hours", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:00", out: "01:00" },
+        { name: "Night Agent 2", task: "After Hours", site: "GUA", in: "22:00", b1: "00:00", lu: "02:00-03:00", b2: "05:00", out: "07:00" }
       ]
     };
 
@@ -527,10 +532,7 @@
         try { TEAM_ORDER = JSON.parse(savedOrder); } catch(e) {}
       }
       
-      // Forzar siempre la carga desde los datos predeterminados actualizados
       let data = JSON.parse(JSON.stringify(defaultData));
-      
-      // Guardar de inmediato en la nueva clave de almacenamiento
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       
       return data;
@@ -653,6 +655,16 @@
       return agents.filter(ag => (ag.site || "").trim().toUpperCase() === selectedSiteFilter);
     }
 
+    function buildTaskSelectHTML(idx, selectedTask) {
+      let html = `<select id="input-${idx}-task" class="task-select" style="width: 105px;">`;
+      TASK_OPTIONS.forEach(opt => {
+        const isSel = (opt === selectedTask) ? "selected" : "";
+        html += `<option value="${opt}" ${isSel}>${opt}</option>`;
+      });
+      html += `</select>`;
+      return html;
+    }
+
     function renderTable() {
       const tbody = document.getElementById("schedule-tbody");
       tbody.innerHTML = "";
@@ -680,6 +692,7 @@
             <i class="fa-solid fa-bars drag-handle" title="Drag to reorder"></i>
             <input type="text" id="input-${idx}-name" value="${ag.name}" readonly>
           </td>
+          <td>${buildTaskSelectHTML(idx, ag.task || 'Cases')}</td>
           <td><input type="text" id="input-${idx}-site" value="${ag.site}" readonly style="width: 60px;"></td>
           <td><input type="text" id="input-${idx}-in" value="${ag.in}" readonly style="width: 75px;"></td>
           <td><input type="text" id="input-${idx}-b1" value="${ag.b1}" readonly style="width: 75px;"></td>
@@ -742,6 +755,11 @@
           }
         });
 
+        const taskSelect = document.getElementById(`input-${idx}-task`);
+        if (taskSelect) {
+          taskSelect.classList.add('editing-mode');
+        }
+
         const btnGroup = document.getElementById(`btn-group-${idx}`);
         if (btnGroup) {
           btnGroup.innerHTML = `
@@ -763,6 +781,12 @@
         }
       });
 
+      const taskSelect = document.getElementById(`input-${idx}-task`);
+      if (taskSelect) {
+        taskSelect.classList.remove('editing-mode');
+        scheduleData[activeTeam][idx]['task'] = taskSelect.value;
+      }
+
       saveToStorage();
       renderTable();
     }
@@ -779,7 +803,7 @@
         const defaultIn = isNightShift ? "16:00" : "08:00";
         const defaultOut = isNightShift ? "01:00" : "17:00";
         
-        scheduleData[activeTeam].push({ name: "New Agent", site: defaultSite, in: defaultIn, b1: "", lu: "", b2: "", out: defaultOut });
+        scheduleData[activeTeam].push({ name: "New Agent", task: "Cases", site: defaultSite, in: defaultIn, b1: "", lu: "", b2: "", out: defaultOut });
         saveToStorage();
         renderTable();
         
@@ -791,6 +815,12 @@
             input.classList.add('editing-mode');
           }
         });
+
+        const taskSelect = document.getElementById(`input-${newIdx}-task`);
+        if (taskSelect) {
+          taskSelect.classList.add('editing-mode');
+        }
+
         const btnGroup = document.getElementById(`btn-group-${newIdx}`);
         if(btnGroup) {
           btnGroup.innerHTML = `
@@ -976,11 +1006,12 @@
         return;
       }
 
-      let csvContent = "\uFEFFTeam,Agent Name,Site / Branch,Clock In,Break 1,Lunch,Break 2,Clock Out\n";
+      let csvContent = "\uFEFFTeam,Agent Name,Task,Site / Branch,Clock In,Break 1,Lunch,Break 2,Clock Out\n";
       agents.forEach(ag => {
         const row = [
           `"${activeTeam}"`,
           `"${ag.name || ''}"`,
+          `"${ag.task || ''}"`,
           `"${ag.site || ''}"`,
           `"${ag.in || ''}"`,
           `"${ag.b1 || ''}"`,
