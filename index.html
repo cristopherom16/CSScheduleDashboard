@@ -353,7 +353,7 @@
 
   <script>
     const AUTH_PASSWORD = "management2026!";
-    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA";
+    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA_V2";
     const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM";
     const TEAM_ORDER_KEY = "CS_SUPPORT_TEAM_ORDER";
 
@@ -510,44 +510,6 @@
       ]
     };
 
-    // Helper para restar 1 hora a un string tipo "07:00"
-    function shiftTimeBackOneHour(timeStr) {
-      if (!timeStr || !timeStr.includes(':')) return timeStr;
-      let [h, m] = timeStr.trim().split(':').map(Number);
-      h = (h - 1 + 24) % 24;
-      return `${h < 10 ? '0' + h : h}:${m < 10 ? '0' + m : m}`;
-    }
-
-    // Migration logic to update localStorage automatically for PAN, COL, JAM
-    function migrateScheduleData(data) {
-      let isModified = false;
-      const targetSites = ['PAN', 'COL', 'JAM'];
-
-      Object.keys(data).forEach(teamKey => {
-        data[teamKey].forEach(ag => {
-          if (ag.site && targetSites.includes(ag.site.trim().toUpperCase())) {
-            // Verificar si el horario aun coincide con los horarios antiguos conocidos
-            if (ag.in === "06:00" || ag.in === "07:00" || ag.in === "08:00") {
-              ag.in = shiftTimeBackOneHour(ag.in);
-              ag.b1 = shiftTimeBackOneHour(ag.b1);
-              ag.b2 = shiftTimeBackOneHour(ag.b2);
-              ag.out = shiftTimeBackOneHour(ag.out);
-              if (ag.lu && ag.lu.includes('-')) {
-                let parts = ag.lu.split('-');
-                ag.lu = `${shiftTimeBackOneHour(parts[0])}-${shiftTimeBackOneHour(parts[1])}`;
-              }
-              isModified = true;
-            }
-          }
-        });
-      });
-
-      if (isModified) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      }
-      return data;
-    }
-
     let scheduleData = loadFromStorage();
     let activeTeam = localStorage.getItem(ACTIVE_TEAM_KEY) || "OS Phones Team";
     let draggedIndex = null;
@@ -564,22 +526,13 @@
       if (savedOrder) {
         try { TEAM_ORDER = JSON.parse(savedOrder); } catch(e) {}
       }
-      const saved = localStorage.getItem(STORAGE_KEY);
-      let data = null;
-      if (saved) {
-        try { data = JSON.parse(saved); } catch(e) {}
-      }
-      if (!data) {
-        data = JSON.parse(JSON.stringify(defaultData));
-      }
       
-      // Migración e invocación para forzar la actualización en localStorage
-      data = migrateScheduleData(data);
-
-      // Garantizar que 'After Hour Team' siempre exista con datos validos
-      if (!data["After Hour Team"] || data["After Hour Team"].length === 0) {
-        data["After Hour Team"] = JSON.parse(JSON.stringify(defaultData["After Hour Team"]));
-      }
+      // Forzar siempre la carga desde los datos predeterminados actualizados
+      let data = JSON.parse(JSON.stringify(defaultData));
+      
+      // Guardar de inmediato en la nueva clave de almacenamiento
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      
       return data;
     }
 
