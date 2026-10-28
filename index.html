@@ -129,6 +129,7 @@
     .editable-table-wrap { overflow-x: auto; max-height: 400px; }
     table.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
     table.data-table th { background: #0b1329; text-align: center; color: var(--amber); border: 1px solid var(--border); padding: 10px; font-weight: bold; }
+    table.data-table th select { padding: 2px 4px; font-size: 0.75rem; margin-top: 4px; display: block; width: 100%; text-align: center; }
     table.data-table td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
     table.data-table td.agent-name-cell { text-align: left; }
     
@@ -244,7 +245,6 @@
     <h1><i class="fa-solid fa-calendar-days"></i> CUSTOMER SUPPORT SCHEDULE DASHBOARD</h1>
     <div style="text-align: right;">
       <span id="last-updated" style="font-size: 0.8rem; color: #10b981; display: block;"><i class="fa-solid fa-lock"></i> Protected Operations Panel</span>
-      <!-- TOGGLE THEME BUTTON BELOW BADGE -->
       <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
         <i id="themeIcon" class="fa-solid fa-sun" style="font-size: 0.85rem;"></i>
       </button>
@@ -264,21 +264,6 @@
         <button class="btn-edit-team" onclick="editTeamName()"><i class="fa-solid fa-pen-to-square"></i> Edit Team Name</button>
         <button class="btn-delete-team" onclick="deleteTeam()"><i class="fa-solid fa-trash-can"></i> Delete Team</button>
       </div>
-    </div>
-
-    <!-- SITE / BRANCH FILTER -->
-    <div>
-      <label style="font-size: 0.85rem; color: var(--amber); display: block; margin-bottom: 4px; font-weight: 600;"><i class="fa-solid fa-filter"></i> Filter by Site / Branch:</label>
-      <select id="site-filter-select" onchange="applySiteFilter()">
-        <option value="ALL">ALL SITES / BRANCHES</option>
-        <option value="GUA">Guatemala (GUA)</option>
-        <option value="MX">Mexico (MX)</option>
-        <option value="COL">Colombia (COL)</option>
-        <option value="PAN">Panama (PAN)</option>
-        <option value="JAM">Jamaica (JAM)</option>
-        <option value="USA">United States (USA)</option>
-        <option value="PHI">Philippines (PHI)</option>
-      </select>
     </div>
   </div>
 
@@ -313,15 +298,38 @@
       <button onclick="addAgentRow()"><i class="fa-solid fa-user-plus"></i> Add Agent</button>
     </div>
     <p style="font-size: 0.8rem; color: #b0bec5; margin-bottom: 12px; margin-top: 4px;">
-      Drag rows freely to reorder. Password required to add, edit, or delete agents/teams.
+      Drag rows freely to reorder. Filter by Task or Site directly from header options.
     </p>
     <div class="editable-table-wrap">
       <table class="data-table" id="schedule-table">
         <thead>
           <tr>
             <th style="text-align: left;">Agent Name</th>
-            <th>Task</th>
-            <th>Site / Branch</th>
+            <th>
+              Task
+              <select id="header-task-filter" onchange="applyHeaderFilters()">
+                <option value="ALL">ALL TASKS</option>
+                <option value="Phones">Phones</option>
+                <option value="Cases">Cases</option>
+                <option value="LL+">LL+</option>
+                <option value="TFX">TFX</option>
+                <option value="After Hours Team">After Hours Team</option>
+                <option value="Management">Management</option>
+              </select>
+            </th>
+            <th>
+              Site / Branch
+              <select id="header-site-filter" onchange="applyHeaderFilters()">
+                <option value="ALL">ALL SITES</option>
+                <option value="GUA">GUA</option>
+                <option value="MX">MX</option>
+                <option value="COL">COL</option>
+                <option value="PAN">PAN</option>
+                <option value="JAM">JAM</option>
+                <option value="USA">USA</option>
+                <option value="PHI">PHI</option>
+              </select>
+            </th>
             <th>Clock In</th>
             <th>Break 1</th>
             <th>Lunch</th>
@@ -354,23 +362,22 @@
 
   <script>
     const AUTH_PASSWORD = "management2026!";
-    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA_V2";
-    const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM";
-    const TEAM_ORDER_KEY = "CS_SUPPORT_TEAM_ORDER";
+    const STORAGE_KEY = "CS_SUPPORT_SCHEDULE_DATA_V8";
+    const ACTIVE_TEAM_KEY = "CS_SUPPORT_ACTIVE_TEAM_V8";
+    const TEAM_ORDER_KEY = "CS_SUPPORT_TEAM_ORDER_V8";
 
     let TEAM_ORDER = [
-      "OBS Phones Team",
-      "OS Cases Team",
-      "ELD Team",
-      "INS Team",
+      "OS Phones Team",
+      "Insurance Support Team",
+      "ELD Support Team",
       "LL+ Team",
       "TFX Team",
-      "After Hour Team"
+      "After Hour Team",
+      "OS Cases Team"
     ];
 
     let passwordModalCallback = null;
 
-    // CENTERED POPUP MODAL LOGIC
     function requestPassword(promptText, callback) {
       document.getElementById('modal-prompt-text').innerText = promptText;
       const input = document.getElementById('modal-password-input');
@@ -414,7 +421,6 @@
       });
     }
 
-    // LIGHT / DARK MODE TOGGLE LOGIC
     function toggleTheme() {
       const body = document.body;
       const icon = document.getElementById('themeIcon');
@@ -478,7 +484,7 @@
     }
 
     const defaultData = {
-      "OBS Phones Team": [
+      "OS Phones Team": [
         { name: "Dean Spencer", task: "Phones", site: "PAN", in: "06:00", b1: "08:00", lu: "10:30-11:00", b2: "13:15", out: "14:30" },
         { name: "Stephanie Temple", task: "Phones", site: "PAN", in: "06:00", b1: "08:15", lu: "11:00-11:30", b2: "13:00", out: "14:30" },
         { name: "Kellyneth Estrada", task: "Phones", site: "PAN", in: "07:00", b1: "09:00", lu: "11:00-11:30", b2: "13:30", out: "15:30" },
@@ -513,23 +519,89 @@
         { name: "Felix Torres", task: "Phones", site: "PAN", in: "11:00", b1: "13:15", lu: "15:30-16:00", b2: "17:15", out: "19:00" },
         { name: "Rudy Herrera", task: "Cases", site: "GUA", in: "12:00", b1: "13:45", lu: "18:00-19:00", b2: "16:15", out: "21:00" }
       ],
-      "OS Cases Team": [],
-      "ELD Team": [],
-      "INS Team": [],
-      "LL+ Team": [],
+      "Insurance Support Team": [
+        { name: "Keyren Fuertes", task: "Phones", site: "PAN", in: "06:00", b1: "07:45", lu: "10:30-11:00", b2: "13:15", out: "14:30" },
+        { name: "Dana Redwood", task: "Phones", site: "PAN", in: "06:30", b1: "08:30", lu: "11:30-12:00", b2: "13:15", out: "15:00" },
+        { name: "Otto de la Cruz", task: "Cases", site: "GUA", in: "06:30", b1: "08:15", lu: "11:30-12:30", b2: "13:45", out: "15:30" },
+        { name: "Eunice Sir", task: "Cases", site: "GUA", in: "07:00", b1: "08:45", lu: "12:45-13:45", b2: "10:45", out: "16:00" },
+        { name: "Monica Prado", task: "Cases", site: "GUA", in: "07:00", b1: "09:15", lu: "12:00-13:00", b2: "14:45", out: "16:00" },
+        { name: "Freddy Monterroso", task: "Phones", site: "GUA", in: "07:00", b1: "09:15", lu: "13:30-14:30", b2: "11:30", out: "16:00" },
+        { name: "Ana Melendez", task: "Phones", site: "GUA", in: "07:00", b1: "09:15", lu: "13:00-14:00", b2: "11:00", out: "16:00" },
+        { name: "Gustavo Lopez", task: "Phones", site: "GUA", in: "07:00", b1: "08:45", lu: "12:30-13:30", b2: "10:45", out: "16:00" },
+        { name: "Joseth Huerta", task: "Phones", site: "MX", in: "07:00", b1: "09:15", lu: "11:30-12:30", b2: "14:00", out: "16:00" },
+        { name: "Marco Ovalle", task: "Cases", site: "GUA", in: "08:00", b1: "10:30", lu: "13:00-14:00", b2: "15:45", out: "17:00" },
+        { name: "Ariel Yaegui", task: "Cases", site: "GUA", in: "08:00", b1: "10:00", lu: "14:15-15:15", b2: "12:15", out: "17:00" },
+        { name: "Alondra Mendoza", task: "Cases", site: "MX", in: "08:00", b1: "10:15", lu: "12:30-13:30", b2: "15:00", out: "17:00" },
+        { name: "Acsa Esquivel", task: "Phones", site: "GUA", in: "08:00", b1: "09:45", lu: "13:45-14:45", b2: "12:00", out: "17:00" },
+        { name: "Kener Lee", task: "Phones", site: "GUA", in: "08:00", b1: "10:15", lu: "14:30-15:30", b2: "12:15", out: "17:00" },
+        { name: "Kathering Santos", task: "Cases", site: "GUA", in: "09:00", b1: "11:00", lu: "14:45-15:45", b2: "13:00", out: "18:00" },
+        { name: "Lynda Escobedo", task: "Cases", site: "GUA", in: "09:00", b1: "11:00", lu: "13:15-14:15", b2: "16:15", out: "18:00" },
+        { name: "Juan Avedaño", task: "Cases", site: "GUA", in: "09:00", b1: "10:30", lu: "15:15-16:15", b2: "13:15", out: "18:00" },
+        { name: "Luis Leon", task: "Cases", site: "COL", in: "09:00", b1: "10:45", lu: "13:15-14:15", b2: "16:00", out: "18:00" },
+        { name: "Michelle Marquez", task: "Cases", site: "COL", in: "09:00", b1: "11:00", lu: "13:45-14:45", b2: "16:15", out: "18:00" },
+        { name: "Cesar Colaj", task: "Phones", site: "GUA", in: "10:00", b1: "11:45", lu: "15:15-16:15", b2: "13:45", out: "19:00" },
+        { name: "Marielys Tejada", task: "Phones", site: "PAN", in: "11:00", b1: "13:30", lu: "15:30-16:00", b2: "17:15", out: "19:00" }
+      ],
+      "ELD Support Team": [
+        { name: "Sergio Chiguil", task: "Phones", site: "GUA", in: "06:00", b1: "09:00", lu: "11:00-12:00", b2: "13:45", out: "15:00" },
+        { name: "Edgar Castillo", task: "Phones", site: "GUA", in: "06:00", b1: "08:00", lu: "12:00-13:00", b2: "10:00", out: "15:00" },
+        { name: "Benneth Smith", task: "Phones", site: "PAN", in: "06:30", b1: "08:45", lu: "11:00-11:30", b2: "13:15", out: "15:00" },
+        { name: "Celina Franco", task: "Cases", site: "GUA", in: "07:00", b1: "10:45", lu: "13:00-14:00", b2: "15:15", out: "16:00" },
+        { name: "Brandon Vasquez", task: "Cases", site: "GUA", in: "07:00", b1: "10:00", lu: "11:30-12:30", b2: "14:30", out: "16:00" },
+        { name: "Samantha Chinchilla", task: "Phones", site: "GUA", in: "07:00", b1: "10:00", lu: "13:00-14:00", b2: "15:00", out: "16:00" },
+        { name: "Esvin Gomez", task: "Phones", site: "GUA", in: "07:00", b1: "08:45", lu: "11:00-12:00", b2: "14:00", out: "16:00" },
+        { name: "Kevin Martinez", task: "Phones", site: "GUA", in: "07:00", b1: "09:15", lu: "13:30-14:30", b2: "11:15", out: "16:00" },
+        { name: "Froy Gonzalez", task: "Phones", site: "GUA", in: "07:00", b1: "09:00", lu: "13:00-14:00", b2: "11:30", out: "16:00" },
+        { name: "Luis Gonzalez", task: "Phones", site: "GUA", in: "07:00", b1: "08:15", lu: "12:30-13:30", b2: "10:15", out: "16:00" },
+        { name: "Kenford Morris", task: "Phones", site: "JAM", in: "07:00", b1: "11:00", lu: "13:30-14:15", b2: "", out: "16:00" },
+        { name: "Jesus Rios", task: "Phones", site: "PAN", in: "07:30", b1: "09:15", lu: "11:30-12:00", b2: "14:00", out: "16:00" },
+        { name: "Marie Perez", task: "Phones", site: "PAN", in: "07:30", b1: "09:30", lu: "11:30-12:00", b2: "14:15", out: "16:00" },
+        { name: "Josue Sucuc", task: "Cases", site: "GUA", in: "08:00", b1: "10:45", lu: "14:00-15:00", b2: "15:45", out: "17:00" },
+        { name: "Melanie Garcia", task: "Phones", site: "GUA", in: "08:00", b1: "11:30", lu: "15:00-16:00", b2: "13:30", out: "17:00" },
+        { name: "Sebastian Quiñonez", task: "Phones", site: "GUA", in: "08:00", b1: "10:00", lu: "14:00-15:00", b2: "15:45", out: "17:00" },
+        { name: "Danae Castillo", task: "Phones", site: "MX", in: "08:00", b1: "10:45", lu: "13:30-14:30", b2: "16:00", out: "17:00" },
+        { name: "Cesar Larios", task: "Phones", site: "MX", in: "08:00", b1: "10:00", lu: "12:30-13:30", b2: "15:30", out: "17:00" },
+        { name: "Marcos Espinosa", task: "Phones", site: "PAN", in: "08:30", b1: "11:00", lu: "13:30-14:00", b2: "15:30", out: "17:00" },
+        { name: "Daniel Pelayo", task: "Phones", site: "MX", in: "09:00", b1: "10:30", lu: "13:15-14:15", b2: "16:15", out: "18:00" },
+        { name: "Kevin Gordoa", task: "Phones", site: "MX", in: "09:00", b1: "11:15", lu: "14:00-15:00", b2: "16:30", out: "18:00" },
+        { name: "Jorge Najera", task: "Cases", site: "GUA", in: "10:00", b1: "16:00", lu: "12:00-13:00", b2: "17:45", out: "19:00" },
+        { name: "Tevin Smallwood", task: "Cases", site: "JAM", in: "10:00", b1: "12:30", lu: "16:15-17:00", b2: "", out: "19:00" },
+        { name: "Luis Ajche", task: "Phones", site: "GUA", in: "10:00", b1: "12:00", lu: "13:45-14:45", b2: "17:00", out: "19:00" },
+        { name: "Kia Francis", task: "Phones", site: "JAM", in: "10:00", b1: "12:15", lu: "15:45-16:30", b2: "", out: "19:00" },
+        { name: "Shiyan Lee", task: "Phones", site: "JAM", in: "10:00", b1: "13:00", lu: "15:15-16:00", b2: "", out: "19:00" },
+        { name: "Jose Rodriguez", task: "Phones", site: "PAN", in: "11:00", b1: "13:15", lu: "15:30-16:00", b2: "17:15", out: "19:00" },
+        { name: "Kevin Williams", task: "Phones", site: "PAN", in: "11:00", b1: "13:00", lu: "15:30-16:00", b2: "17:30", out: "19:00" }
+      ],
+      "LL+ Team": [
+        { name: "Julio Cortez", task: "LL+", site: "GUA", in: "06:00", b1: "08:00", lu: "12:00-13:00", b2: "10:00", out: "15:00" },
+        { name: "Alex Coyote", task: "LL+", site: "GUA", in: "06:00", b1: "08:00", lu: "12:30-13:30", b2: "10:00", out: "15:00" },
+        { name: "Omar Gomez", task: "LL+", site: "GUA", in: "07:00", b1: "10:15", lu: "13:30-14:30", b2: "12:15", out: "16:00" },
+        { name: "Luis Escobar", task: "LL+", site: "GUA", in: "07:30", b1: "09:00", lu: "13:15-14:15", b2: "11:15", out: "16:30" },
+        { name: "Andy Pineda", task: "LL+", site: "GUA", in: "07:30", b1: "09:30", lu: "13:30-14:30", b2: "11:30", out: "16:30" },
+        { name: "Edgar Palomo", task: "LL+", site: "GUA", in: "07:30", b1: "10:15", lu: "14:15-15:15", b2: "12:00", out: "16:30" },
+        { name: "Jonathan Pirir", task: "LL+", site: "GUA", in: "08:00", b1: "10:00", lu: "14:30-15:30", b2: "12:00", out: "17:00" },
+        { name: "Yossi Martinez", task: "LL+", site: "GUA", in: "09:00", b1: "11:30", lu: "15:00-16:00", b2: "13:00", out: "18:00" }
+      ],
       "TFX Team": [
-        { name: "Fernando Daniel Ramirez", task: "Cases", site: "MX", in: "09:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "17:00" },
-        { name: "Maria Fernanda Saucedo", task: "Cases", site: "MX", in: "10:00", b1: "11:00", lu: "12:30-13:30", b2: "14:30", out: "18:00" }
+        { name: "Fernando Ramirez", task: "TFX", site: "MX", in: "06:00", b1: "09:30", lu: "11:30-12:30", b2: "13:30", out: "15:00" },
+        { name: "Mariana Velasquez", task: "TFX", site: "MX", in: "08:00", b1: "10:00", lu: "13:00-14:00", b2: "15:30", out: "17:00" },
+        { name: "Maria Saucedo", task: "TFX", site: "MX", in: "08:00", b1: "12:30", lu: "14:00-15:00", b2: "15:45", out: "17:00" }
       ],
       "After Hour Team": [
-        { name: "Night Agent 1", task: "Phones", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:00", out: "01:00" },
-        { name: "Night Agent 2", task: "Phones", site: "GUA", in: "22:00", b1: "00:00", lu: "02:00-03:00", b2: "05:00", out: "07:00" }
-      ]
+        { name: "Mary Rafols", task: "After Hours Team", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:15", out: "01:00" },
+        { name: "Jennifer Jakosalem", task: "Management", site: "PHI", in: "17:00", b1: "19:00", lu: "21:00-22:00", b2: "00:15", out: "02:00" },
+        { name: "Aaron Gozum", task: "After Hours Team", site: "PHI", in: "17:00", b1: "19:15", lu: "21:30-22:30", b2: "00:30", out: "02:00" },
+        { name: "Marianne Velasco", task: "After Hours Team", site: "PHI", in: "17:00", b1: "18:45", lu: "22:30-23:30", b2: "00:45", out: "02:00" },
+        { name: "Ann Dayuta", task: "After Hours Team", site: "PHI", in: "22:00", b1: "00:00", lu: "02:00-03:00", b2: "05:00", out: "07:00" },
+        { name: "Kyle Abad", task: "After Hours Team", site: "PHI", in: "22:00", b1: "00:15", lu: "03:00-04:00", b2: "05:30", out: "07:00" }
+      ],
+      "OS Cases Team": []
     };
 
     let scheduleData = loadFromStorage();
-    let activeTeam = localStorage.getItem(ACTIVE_TEAM_KEY) || "OBS Phones Team";
+    let activeTeam = localStorage.getItem(ACTIVE_TEAM_KEY) || "OS Phones Team";
     let draggedIndex = null;
+    let selectedTaskFilter = "ALL";
     let selectedSiteFilter = "ALL";
 
     function saveToStorage() {
@@ -560,8 +632,8 @@
 
       const keys = Object.keys(scheduleData);
       if (keys.length === 0) {
-        scheduleData["OBS Phones Team"] = [];
-        activeTeam = "OBS Phones Team";
+        scheduleData["OS Phones Team"] = [];
+        activeTeam = "OS Phones Team";
         saveToStorage();
       }
 
@@ -655,17 +727,19 @@
       }
     }
 
-    function applySiteFilter() {
-      selectedSiteFilter = document.getElementById("site-filter-select").value;
+    function applyHeaderFilters() {
+      selectedTaskFilter = document.getElementById("header-task-filter").value;
+      selectedSiteFilter = document.getElementById("header-site-filter").value;
       renderTable();
     }
 
     function getFilteredAgents() {
       const agents = scheduleData[activeTeam] || [];
-      if (selectedSiteFilter === "ALL") {
-        return agents;
-      }
-      return agents.filter(ag => (ag.site || "").trim().toUpperCase() === selectedSiteFilter);
+      return agents.filter(ag => {
+        const matchesTask = (selectedTaskFilter === "ALL") || ((ag.task || "").trim().toLowerCase() === selectedTaskFilter.toLowerCase());
+        const matchesSite = (selectedSiteFilter === "ALL") || ((ag.site || "").trim().toUpperCase() === selectedSiteFilter.toUpperCase());
+        return matchesTask && matchesSite;
+      });
     }
 
     function renderTable() {
@@ -674,7 +748,9 @@
       const agents = scheduleData[activeTeam] || [];
 
       agents.forEach((ag, idx) => {
-        if (selectedSiteFilter !== "ALL" && (ag.site || "").trim().toUpperCase() !== selectedSiteFilter) {
+        const matchesTask = (selectedTaskFilter === "ALL") || ((ag.task || "").trim().toLowerCase() === selectedTaskFilter.toLowerCase());
+        const matchesSite = (selectedSiteFilter === "ALL") || ((ag.site || "").trim().toUpperCase() === selectedSiteFilter.toUpperCase());
+        if (!matchesTask || !matchesSite) {
           return;
         }
 
@@ -694,7 +770,7 @@
             <i class="fa-solid fa-bars drag-handle" title="Drag to reorder"></i>
             <input type="text" id="input-${idx}-name" value="${ag.name || ''}" readonly>
           </td>
-          <td><input type="text" id="input-${idx}-task" value="${ag.task || 'Phones'}" readonly style="width: 80px;"></td>
+          <td><input type="text" id="input-${idx}-task" value="${ag.task || 'Phones'}" readonly style="width: 120px;"></td>
           <td><input type="text" id="input-${idx}-site" value="${ag.site || ''}" readonly style="width: 60px;"></td>
           <td><input type="text" id="input-${idx}-in" value="${ag.in || ''}" readonly style="width: 75px;"></td>
           <td><input type="text" id="input-${idx}-b1" value="${ag.b1 || ''}" readonly style="width: 75px;"></td>
@@ -788,13 +864,14 @@
 
         if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
         const defaultSite = selectedSiteFilter !== "ALL" ? selectedSiteFilter : "GUA";
+        const defaultTask = selectedTaskFilter !== "ALL" ? selectedTaskFilter : "Phones";
         const newIdx = scheduleData[activeTeam].length;
         
         const isNightShift = (activeTeam === "After Hour Team");
         const defaultIn = isNightShift ? "16:00" : "08:00";
         const defaultOut = isNightShift ? "01:00" : "17:00";
         
-        scheduleData[activeTeam].push({ name: "New Agent", task: "Phones", site: defaultSite, in: defaultIn, b1: "", lu: "", b2: "", out: defaultOut });
+        scheduleData[activeTeam].push({ name: "New Agent", task: defaultTask, site: defaultSite, in: defaultIn, b1: "", lu: "", b2: "", out: defaultOut });
         saveToStorage();
         renderTable();
         
