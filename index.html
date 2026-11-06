@@ -121,10 +121,15 @@
     .grid-table td.agent-col { text-align: left; font-weight: bold; position: sticky; left: 0; background: var(--panel); z-index: 1; min-width: 160px; color: var(--text); }
 
     /* Heatmap Colors */
-    .break-cell { background-color: #78350f !important; color: #fde68a !important; }
-    .lunch-cell { background-color: #831843 !important; color: #fbcfe8 !important; }
+    .break-cell { background-color: #78350f !important; color: #fde68a !important; font-weight: 700; }
+    .lunch-cell { background-color: #831843 !important; color: #fbcfe8 !important; font-weight: 700; }
     .off-cell { background-color: #0b1329 !important; color: #64748b; }
-    .duty-cell { background-color: #059669 !important; color: #ffffff !important; }
+    .duty-cell { background-color: #059669 !important; color: #ffffff !important; font-weight: 700; }
+
+    /* QA Team Dedicated Heatmap Colors */
+    .qa-cell { background-color: #ea580c !important; color: #ffffff !important; font-weight: 800; }
+    .t2-cell { background-color: #0284c7 !important; color: #ffffff !important; font-weight: 800; }
+    .obs-cell { background-color: #cbd5e1 !important; color: #000000 !important; font-weight: 800; }
 
     .editable-table-wrap { overflow-x: auto; max-height: 400px; }
     table.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -285,7 +290,7 @@
   <!-- Heatmap Card -->
   <div class="card">
     <h3 style="color: var(--amber);"><i class="fa-solid fa-fire"></i> <span id="heatmap-title">15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)</span></h3>
-    <p style="font-size: 0.8rem; color: #b0bec5; margin-bottom: 12px; margin-top: 4px;">
+    <p id="heatmap-legend" style="font-size: 0.8rem; color: #b0bec5; margin-bottom: 12px; margin-top: 4px;">
       Green = On Duty (ON), Brown = Break (BR), Pink/Red = Lunch (LU).
     </p>
     <div class="heatmap-container" id="heatmap-wrap"></div>
@@ -558,7 +563,7 @@
         { name: "Maria Saucedo", task: "TFX", site: "MX", in: "08:00", b1: "12:30", lu: "14:00-15:00", b2: "15:45", out: "17:00" }
       ],
       "QA / T2 Team": [
-        { name: "Sample Agent", site: "GUA", in: "08:00", qa_eval: "09:00-11:00", b1: "11:00", t2_calls: "11:15-13:00", lu: "13:00-14:00", obs_calls: "14:00-15:30", b2: "15:30", out: "17:00" }
+        { name: "Sample Agent", site: "GUA", in: "07:00", qa_eval: "07:00-08:30, 14:00-15:00", b1: "09:00", t2_calls: "09:15-12:00", lu: "12:00-13:00", obs_calls: "13:00-14:00", b2: "15:30", out: "16:00" }
       ],
       "After Hour Team": [
         { name: "Mary Rafols", task: "After Hours Team", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:15", out: "01:00" },
@@ -683,6 +688,28 @@
         if (endM <= startM) endM += 24 * 60;
       }
       return { start: startM, end: endM };
+    }
+
+    // Parse comma-separated intervals, e.g. "7:00-8:30, 14:00-15:00"
+    function parseIntervalList(str, isNightShift) {
+      if (!str || typeof str !== 'string') return [];
+      const parts = str.split(',');
+      const intervals = [];
+      parts.forEach(p => {
+        const trimmed = p.trim();
+        if (trimmed.includes('-')) {
+          const [startStr, endStr] = trimmed.split('-');
+          const inv = getAdjustedInterval(startStr, endStr, isNightShift);
+          if (inv.start !== null && inv.end !== null) {
+            intervals.push(inv);
+          }
+        }
+      });
+      return intervals;
+    }
+
+    function isTimeInIntervals(slotM, intervals) {
+      return intervals.some(inv => slotM >= inv.start && slotM < inv.end);
     }
 
     function getBranchClass(siteCode) {
@@ -836,11 +863,11 @@
             </td>
             <td><input type="text" id="input-${idx}-site" value="${ag.site || ''}" readonly style="width: 60px;"></td>
             <td><input type="text" id="input-${idx}-in" value="${ag.in || ''}" readonly style="width: 75px;"></td>
-            <td><input type="text" id="input-${idx}-qa_eval" value="${ag.qa_eval || ''}" readonly style="width: 100px;"></td>
+            <td><input type="text" id="input-${idx}-qa_eval" value="${ag.qa_eval || ''}" readonly style="width: 140px;" placeholder="e.g. 7:00-8:30, 14:00-15:00"></td>
             <td><input type="text" id="input-${idx}-b1" value="${ag.b1 || ''}" readonly style="width: 75px;"></td>
-            <td><input type="text" id="input-${idx}-t2_calls" value="${ag.t2_calls || ''}" readonly style="width: 100px;"></td>
+            <td><input type="text" id="input-${idx}-t2_calls" value="${ag.t2_calls || ''}" readonly style="width: 140px;" placeholder="e.g. 9:00-11:00"></td>
             <td><input type="text" id="input-${idx}-lu" value="${ag.lu || ''}" readonly style="width: 110px;"></td>
-            <td><input type="text" id="input-${idx}-obs_calls" value="${ag.obs_calls || ''}" readonly style="width: 100px;"></td>
+            <td><input type="text" id="input-${idx}-obs_calls" value="${ag.obs_calls || ''}" readonly style="width: 140px;" placeholder="e.g. 13:00-14:00"></td>
             <td><input type="text" id="input-${idx}-b2" value="${ag.b2 || ''}" readonly style="width: 75px;"></td>
             <td><input type="text" id="input-${idx}-out" value="${ag.out || ''}" readonly style="width: 75px;"></td>
             <td>
@@ -1118,6 +1145,19 @@
         document.getElementById("heatmap-title").innerText = "15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)";
       }
 
+      // Update Legend Description
+      const legendElem = document.getElementById("heatmap-legend");
+      if (isQA) {
+        legendElem.innerHTML = `
+          Green = On Duty (ON), <span style="color:#f97316;font-weight:bold;">Orange = QA Evaluations (QA)</span>, 
+          <span style="color:#38bdf8;font-weight:bold;">Peacock Blue = Tier 2 Calls (T2)</span>, 
+          <span style="color:#94a3b8;font-weight:bold;">Light Gray = OBS Calls (OBS)</span>, 
+          Brown = Break (BR), Pink = Lunch (LU).
+        `;
+      } else {
+        legendElem.innerHTML = `Green = On Duty (ON), Brown = Break (BR), Pink/Red = Lunch (LU).`;
+      }
+
       let html = `<table class="grid-table"><thead><tr><th class="agent-col">Agent Name</th>`;
       timeSlotsForTeam.forEach(ts => { html += `<th>${ts.timeStr}</th>`; });
       html += `</tr></thead><tbody>`;
@@ -1141,6 +1181,11 @@
           luRange = getAdjustedInterval(parts[0], parts[1], isNightShift);
         }
 
+        // QA Intervals parsed dynamically
+        const qaIntervals = isQA ? parseIntervalList(ag.qa_eval, isNightShift) : [];
+        const t2Intervals = isQA ? parseIntervalList(ag.t2_calls, isNightShift) : [];
+        const obsIntervals = isQA ? parseIntervalList(ag.obs_calls, isNightShift) : [];
+
         timeSlotsForTeam.forEach(ts => {
           const slotM = ts.absMin;
           let cellClass = "off-cell";
@@ -1156,6 +1201,15 @@
             } else if (luRange.start !== null && luRange.end !== null && slotM >= luRange.start && slotM < luRange.end) {
               cellClass = "lunch-cell"; label = "LU";
               slotCounts[slotM].break++;
+            } else if (isQA && isTimeInIntervals(slotM, qaIntervals)) {
+              cellClass = "qa-cell"; label = "QA";
+              slotCounts[slotM].duty++;
+            } else if (isQA && isTimeInIntervals(slotM, t2Intervals)) {
+              cellClass = "t2-cell"; label = "T2";
+              slotCounts[slotM].duty++;
+            } else if (isQA && isTimeInIntervals(slotM, obsIntervals)) {
+              cellClass = "obs-cell"; label = "OBS";
+              slotCounts[slotM].duty++;
             } else {
               cellClass = "duty-cell"; label = "ON";
               slotCounts[slotM].duty++;
