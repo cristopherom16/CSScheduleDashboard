@@ -1244,49 +1244,189 @@
         return;
       }
 
-      let csvContent = "";
-      if (isQATeam()) {
-        csvContent = "\uFEFFTeam,Agent Name,Site / Branch,Clock In,QA Evaluations,Break 1,Tier 2 Calls,Lunch,OBS Calls,Break 2,Clock Out\n";
-        agents.forEach(ag => {
-          const row = [
-            `"${activeTeam}"`,
-            `"${ag.name || ''}"`,
-            `"${ag.site || ''}"`,
-            `"${ag.in || ''}"`,
-            `"${ag.qa_eval || ''}"`,
-            `"${ag.b1 || ''}"`,
-            `"${ag.t2_calls || ''}"`,
-            `"${ag.lu || ''}"`,
-            `"${ag.obs_calls || ''}"`,
-            `"${ag.b2 || ''}"`,
-            `"${ag.out || ''}"`
-          ];
-          csvContent += row.join(",") + "\n";
-        });
-      } else {
-        csvContent = "\uFEFFTeam,Agent Name,Task,Site / Branch,Clock In,Break 1,Lunch,Break 2,Clock Out\n";
-        agents.forEach(ag => {
-          const row = [
-            `"${activeTeam}"`,
-            `"${ag.name || ''}"`,
-            `"${ag.task || ''}"`,
-            `"${ag.site || ''}"`,
-            `"${ag.in || ''}"`,
-            `"${ag.b1 || ''}"`,
-            `"${ag.lu || ''}"`,
-            `"${ag.b2 || ''}"`,
-            `"${ag.out || ''}"`
-          ];
-          csvContent += row.join(",") + "\n";
-        });
-      }
+      const isQA = isQATeam();
+      const isNightShift = (activeTeam === "After Hour Team");
+      const timeSlotsForTeam = isNightShift ? generateTimeSlots(16, 7) : generateTimeSlots(6, 22);
 
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      let excelHTML = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>${activeTeam.substring(0, 31)}</x:Name>
+                  <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+          <style>
+            table { border-collapse: collapse; font-family: Segoe UI, Arial, sans-serif; }
+            th, td { border: 0.5pt solid #cccccc; padding: 6px 10px; text-align: center; }
+            .th-header { background-color: #0b1329; color: #ffc107; font-weight: bold; }
+            .sec-title { background-color: #111c38; color: #ffc107; font-size: 14pt; font-weight: bold; text-align: left; }
+            .duty { background-color: #059669; color: #ffffff; font-weight: bold; }
+            .break { background-color: #78350f; color: #fde68a; font-weight: bold; }
+            .lunch { background-color: #831843; color: #fbcfe8; font-weight: bold; }
+            .qa { background-color: #ea580c; color: #ffffff; font-weight: bold; }
+            .t2 { background-color: #0284c7; color: #ffffff; font-weight: bold; }
+            .obs { background-color: #cbd5e1; color: #000000; font-weight: bold; }
+            .total-row { background-color: #f1f5f9; color: #059669; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <!-- SECTION 1: AGENT SCHEDULE DETAILS -->
+          <table>
+            <tr><td colspan="${isQA ? 10 : 9}" class="sec-title">${activeTeam.toUpperCase()} - AGENT SCHEDULE DETAILS</td></tr>
+            <tr class="th-header">
+              <th style="text-align: left;">Agent Name</th>
+              ${isQA ? `
+                <th>Site / Branch</th>
+                <th>Clock In</th>
+                <th>QA Evaluations</th>
+                <th>Break 1</th>
+                <th>Tier 2 Calls</th>
+                <th>Lunch</th>
+                <th>OBS Calls</th>
+                <th>Break 2</th>
+                <th>Clock Out</th>
+              ` : `
+                <th>Task</th>
+                <th>Site / Branch</th>
+                <th>Clock In</th>
+                <th>Break 1</th>
+                <th>Lunch</th>
+                <th>Break 2</th>
+                <th>Clock Out</th>
+              `}
+            </tr>
+      `;
+
+      agents.forEach(ag => {
+        if (isQA) {
+          excelHTML += `
+            <tr>
+              <td style="text-align: left; font-weight: bold;">${ag.name || ''}</td>
+              <td>${ag.site || ''}</td>
+              <td>${ag.in || ''}</td>
+              <td>${ag.qa_eval || ''}</td>
+              <td>${ag.b1 || ''}</td>
+              <td>${ag.t2_calls || ''}</td>
+              <td>${ag.lu || ''}</td>
+              <td>${ag.obs_calls || ''}</td>
+              <td>${ag.b2 || ''}</td>
+              <td>${ag.out || ''}</td>
+            </tr>
+          `;
+        } else {
+          excelHTML += `
+            <tr>
+              <td style="text-align: left; font-weight: bold;">${ag.name || ''}</td>
+              <td>${ag.task || ''}</td>
+              <td>${ag.site || ''}</td>
+              <td>${ag.in || ''}</td>
+              <td>${ag.b1 || ''}</td>
+              <td>${ag.lu || ''}</td>
+              <td>${ag.b2 || ''}</td>
+              <td>${ag.out || ''}</td>
+            </tr>
+          `;
+        }
+      });
+
+      // SECTION 2: HEATMAP TABLE
+      const totalColumns = timeSlotsForTeam.length + 1;
+      const heatmapTitle = isNightShift ? "15-Minute Coverage Heatmap (4:00 PM – 7:00 AM Next Day)" : "15-Minute Coverage Heatmap (6:00 AM – 10:00 PM)";
+
+      excelHTML += `
+        <tr><td colspan="${totalColumns}" style="border:none; height: 25px;"></td></tr>
+        <tr><td colspan="${totalColumns}" class="sec-title">${activeTeam.toUpperCase()} - ${heatmapTitle.toUpperCase()}</td></tr>
+        <tr class="th-header">
+          <th style="text-align: left; min-width: 180px;">Agent Name</th>
+      `;
+
+      timeSlotsForTeam.forEach(ts => {
+        excelHTML += `<th>${ts.timeStr}</th>`;
+      });
+      excelHTML += `</tr>`;
+
+      const slotCounts = {};
+      timeSlotsForTeam.forEach(ts => slotCounts[ts.absMin] = { duty: 0, break: 0 });
+
+      agents.forEach(ag => {
+        const labelText = isQA ? `${ag.name} (${ag.site || ''})` : `${ag.name} (${ag.task || 'Phones'} - ${ag.site || ''})`;
+        excelHTML += `<tr><td style="text-align: left; font-weight: bold;">${labelText}</td>`;
+
+        const shiftRange = getAdjustedInterval(ag.in, ag.out, isNightShift);
+        const b1Val = getAdjustedInterval(ag.b1, null, isNightShift);
+        const b2Val = getAdjustedInterval(ag.b2, null, isNightShift);
+
+        let luRange = { start: null, end: null };
+        if (ag.lu && ag.lu.includes('-')) {
+          const parts = ag.lu.split('-');
+          luRange = getAdjustedInterval(parts[0], parts[1], isNightShift);
+        }
+
+        const qaIntervals = isQA ? parseIntervalList(ag.qa_eval, isNightShift) : [];
+        const t2Intervals = isQA ? parseIntervalList(ag.t2_calls, isNightShift) : [];
+        const obsIntervals = isQA ? parseIntervalList(ag.obs_calls, isNightShift) : [];
+
+        timeSlotsForTeam.forEach(ts => {
+          const slotM = ts.absMin;
+          let cellClass = "";
+          let label = "";
+
+          if (shiftRange.start !== null && shiftRange.end !== null && slotM >= shiftRange.start && slotM < shiftRange.end) {
+            if (b1Val.start !== null && slotM === b1Val.start) {
+              cellClass = "class='break'"; label = "BR";
+              slotCounts[slotM].break++;
+            } else if (b2Val.start !== null && slotM === b2Val.start) {
+              cellClass = "class='break'"; label = "BR";
+              slotCounts[slotM].break++;
+            } else if (luRange.start !== null && luRange.end !== null && slotM >= luRange.start && slotM < luRange.end) {
+              cellClass = "class='lunch'"; label = "LU";
+              slotCounts[slotM].break++;
+            } else if (isQA && isTimeInIntervals(slotM, qaIntervals)) {
+              cellClass = "class='qa'"; label = "QA";
+              slotCounts[slotM].duty++;
+            } else if (isQA && isTimeInIntervals(slotM, t2Intervals)) {
+              cellClass = "class='t2'"; label = "T2";
+              slotCounts[slotM].duty++;
+            } else if (isQA && isTimeInIntervals(slotM, obsIntervals)) {
+              cellClass = "class='obs'"; label = "OBS";
+              slotCounts[slotM].duty++;
+            } else {
+              cellClass = "class='duty'"; label = "ON";
+              slotCounts[slotM].duty++;
+            }
+          }
+
+          excelHTML += `<td ${cellClass}>${label}</td>`;
+        });
+
+        excelHTML += `</tr>`;
+      });
+
+      // Total On Duty Row
+      excelHTML += `<tr class="total-row"><td style="text-align: left; font-weight: bold;">TOTAL ON DUTY</td>`;
+      timeSlotsForTeam.forEach(ts => {
+        const count = slotCounts[ts.absMin].duty;
+        excelHTML += `<td>${count}</td>`;
+      });
+      excelHTML += `</tr>`;
+
+      excelHTML += `</table></body></html>`;
+
+      const blob = new Blob([excelHTML], { type: "application/vnd.ms-excel;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       const safeTeamName = activeTeam.replace(/[^a-z0-9_-]/gi, '_');
       link.setAttribute("href", url);
-      link.setAttribute("download", `${safeTeamName}_schedule_report.csv`);
+      link.setAttribute("download", `${safeTeamName}_schedule_and_heatmap.xls`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
