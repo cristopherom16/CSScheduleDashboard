@@ -302,42 +302,7 @@
     </p>
     <div class="editable-table-wrap">
       <table class="data-table" id="schedule-table">
-        <thead>
-          <tr>
-            <th style="text-align: left;">Agent Name</th>
-            <th>
-              Task
-              <select id="header-task-filter" onchange="applyHeaderFilters()">
-                <option value="ALL">ALL TASKS</option>
-                <option value="Phones">Phones</option>
-                <option value="Cases">Cases</option>
-                <option value="LL+">LL+</option>
-                <option value="TFX">TFX</option>
-                <option value="After Hours Team">After Hours Team</option>
-                <option value="Management">Management</option>
-              </select>
-            </th>
-            <th>
-              Site / Branch
-              <select id="header-site-filter" onchange="applyHeaderFilters()">
-                <option value="ALL">ALL SITES</option>
-                <option value="GUA">GUA</option>
-                <option value="MX">MX</option>
-                <option value="COL">COL</option>
-                <option value="PAN">PAN</option>
-                <option value="JAM">JAM</option>
-                <option value="USA">USA</option>
-                <option value="PHI">PHI</option>
-              </select>
-            </th>
-            <th>Clock In</th>
-            <th>Break 1</th>
-            <th>Lunch</th>
-            <th>Break 2</th>
-            <th>Clock Out</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
+        <thead id="schedule-thead"></thead>
         <tbody id="schedule-tbody"></tbody>
       </table>
     </div>
@@ -372,11 +337,16 @@
       "ELD Support Team",
       "LL+ Team",
       "TFX Team",
+      "QA / T2 Team",
       "After Hour Team",
       "OS Cases Team"
     ];
 
     let passwordModalCallback = null;
+
+    function isQATeam() {
+      return activeTeam.trim().toLowerCase() === "qa / t2 team";
+    }
 
     function requestPassword(promptText, callback) {
       document.getElementById('modal-prompt-text').innerText = promptText;
@@ -587,6 +557,9 @@
         { name: "Mariana Velasquez", task: "TFX", site: "MX", in: "08:00", b1: "10:00", lu: "13:00-14:00", b2: "15:30", out: "17:00" },
         { name: "Maria Saucedo", task: "TFX", site: "MX", in: "08:00", b1: "12:30", lu: "14:00-15:00", b2: "15:45", out: "17:00" }
       ],
+      "QA / T2 Team": [
+        { name: "Sample Agent", site: "GUA", in: "08:00", qa_eval: "09:00-11:00", b1: "11:00", t2_calls: "11:15-13:00", lu: "13:00-14:00", obs_calls: "14:00-15:30", b2: "15:30", out: "17:00" }
+      ],
       "After Hour Team": [
         { name: "Mary Rafols", task: "After Hours Team", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:15", out: "01:00" },
         { name: "Jennifer Jakosalem", task: "Management", site: "PHI", in: "17:00", b1: "19:00", lu: "21:00-22:00", b2: "00:15", out: "02:00" },
@@ -728,27 +701,117 @@
     }
 
     function applyHeaderFilters() {
-      selectedTaskFilter = document.getElementById("header-task-filter").value;
-      selectedSiteFilter = document.getElementById("header-site-filter").value;
+      const taskElem = document.getElementById("header-task-filter");
+      if (taskElem) {
+        selectedTaskFilter = taskElem.value;
+      } else {
+        selectedTaskFilter = "ALL";
+      }
+      const siteElem = document.getElementById("header-site-filter");
+      if (siteElem) {
+        selectedSiteFilter = siteElem.value;
+      } else {
+        selectedSiteFilter = "ALL";
+      }
       renderTable();
     }
 
     function getFilteredAgents() {
       const agents = scheduleData[activeTeam] || [];
+      const isQA = isQATeam();
       return agents.filter(ag => {
-        const matchesTask = (selectedTaskFilter === "ALL") || ((ag.task || "").trim().toLowerCase() === selectedTaskFilter.toLowerCase());
+        const matchesTask = isQA || (selectedTaskFilter === "ALL") || ((ag.task || "").trim().toLowerCase() === selectedTaskFilter.toLowerCase());
         const matchesSite = (selectedSiteFilter === "ALL") || ((ag.site || "").trim().toUpperCase() === selectedSiteFilter.toUpperCase());
         return matchesTask && matchesSite;
       });
     }
 
+    function renderTableHeader() {
+      const thead = document.getElementById("schedule-thead");
+      if (isQATeam()) {
+        thead.innerHTML = `
+          <tr>
+            <th style="text-align: left;">Agent Name</th>
+            <th>
+              Site / Branch
+              <select id="header-site-filter" onchange="applyHeaderFilters()">
+                <option value="ALL">ALL SITES</option>
+                <option value="GUA">GUA</option>
+                <option value="MX">MX</option>
+                <option value="COL">COL</option>
+                <option value="PAN">PAN</option>
+                <option value="JAM">JAM</option>
+                <option value="USA">USA</option>
+                <option value="PHI">PHI</option>
+              </select>
+            </th>
+            <th>Clock In</th>
+            <th>QA Evaluations</th>
+            <th>Break 1</th>
+            <th>Tier 2 Calls</th>
+            <th>Lunch</th>
+            <th>OBS Calls</th>
+            <th>Break 2</th>
+            <th>Clock Out</th>
+            <th>Actions</th>
+          </tr>
+        `;
+      } else {
+        thead.innerHTML = `
+          <tr>
+            <th style="text-align: left;">Agent Name</th>
+            <th>
+              Task
+              <select id="header-task-filter" onchange="applyHeaderFilters()">
+                <option value="ALL">ALL TASKS</option>
+                <option value="Phones">Phones</option>
+                <option value="Cases">Cases</option>
+                <option value="LL+">LL+</option>
+                <option value="TFX">TFX</option>
+                <option value="After Hours Team">After Hours Team</option>
+                <option value="Management">Management</option>
+              </select>
+            </th>
+            <th>
+              Site / Branch
+              <select id="header-site-filter" onchange="applyHeaderFilters()">
+                <option value="ALL">ALL SITES</option>
+                <option value="GUA">GUA</option>
+                <option value="MX">MX</option>
+                <option value="COL">COL</option>
+                <option value="PAN">PAN</option>
+                <option value="JAM">JAM</option>
+                <option value="USA">USA</option>
+                <option value="PHI">PHI</option>
+              </select>
+            </th>
+            <th>Clock In</th>
+            <th>Break 1</th>
+            <th>Lunch</th>
+            <th>Break 2</th>
+            <th>Clock Out</th>
+            <th>Actions</th>
+          </tr>
+        `;
+      }
+
+      if (document.getElementById("header-site-filter")) {
+        document.getElementById("header-site-filter").value = selectedSiteFilter;
+      }
+      if (document.getElementById("header-task-filter")) {
+        document.getElementById("header-task-filter").value = selectedTaskFilter;
+      }
+    }
+
     function renderTable() {
+      renderTableHeader();
       const tbody = document.getElementById("schedule-tbody");
       tbody.innerHTML = "";
       const agents = scheduleData[activeTeam] || [];
+      const isQA = isQATeam();
 
       agents.forEach((ag, idx) => {
-        const matchesTask = (selectedTaskFilter === "ALL") || ((ag.task || "").trim().toLowerCase() === selectedTaskFilter.toLowerCase());
+        const matchesTask = isQA || (selectedTaskFilter === "ALL") || ((ag.task || "").trim().toLowerCase() === selectedTaskFilter.toLowerCase());
         const matchesSite = (selectedSiteFilter === "ALL") || ((ag.site || "").trim().toUpperCase() === selectedSiteFilter.toUpperCase());
         if (!matchesTask || !matchesSite) {
           return;
@@ -765,25 +828,49 @@
         tr.addEventListener('drop', (e) => handleDrop(e, idx));
         tr.addEventListener('dragend', handleDragEnd);
 
-        tr.innerHTML = `
-          <td class="agent-name-cell">
-            <i class="fa-solid fa-bars drag-handle" title="Drag to reorder"></i>
-            <input type="text" id="input-${idx}-name" value="${ag.name || ''}" readonly>
-          </td>
-          <td><input type="text" id="input-${idx}-task" value="${ag.task || 'Phones'}" readonly style="width: 120px;"></td>
-          <td><input type="text" id="input-${idx}-site" value="${ag.site || ''}" readonly style="width: 60px;"></td>
-          <td><input type="text" id="input-${idx}-in" value="${ag.in || ''}" readonly style="width: 75px;"></td>
-          <td><input type="text" id="input-${idx}-b1" value="${ag.b1 || ''}" readonly style="width: 75px;"></td>
-          <td><input type="text" id="input-${idx}-lu" value="${ag.lu || ''}" readonly style="width: 110px;"></td>
-          <td><input type="text" id="input-${idx}-b2" value="${ag.b2 || ''}" readonly style="width: 75px;"></td>
-          <td><input type="text" id="input-${idx}-out" value="${ag.out || ''}" readonly style="width: 75px;"></td>
-          <td>
-            <div class="action-btn-group" id="btn-group-${idx}">
-              <button class="btn-edit" onclick="enableRowEdit(${idx})" title="Edit"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </td>
-        `;
+        if (isQA) {
+          tr.innerHTML = `
+            <td class="agent-name-cell">
+              <i class="fa-solid fa-bars drag-handle" title="Drag to reorder"></i>
+              <input type="text" id="input-${idx}-name" value="${ag.name || ''}" readonly>
+            </td>
+            <td><input type="text" id="input-${idx}-site" value="${ag.site || ''}" readonly style="width: 60px;"></td>
+            <td><input type="text" id="input-${idx}-in" value="${ag.in || ''}" readonly style="width: 75px;"></td>
+            <td><input type="text" id="input-${idx}-qa_eval" value="${ag.qa_eval || ''}" readonly style="width: 100px;"></td>
+            <td><input type="text" id="input-${idx}-b1" value="${ag.b1 || ''}" readonly style="width: 75px;"></td>
+            <td><input type="text" id="input-${idx}-t2_calls" value="${ag.t2_calls || ''}" readonly style="width: 100px;"></td>
+            <td><input type="text" id="input-${idx}-lu" value="${ag.lu || ''}" readonly style="width: 110px;"></td>
+            <td><input type="text" id="input-${idx}-obs_calls" value="${ag.obs_calls || ''}" readonly style="width: 100px;"></td>
+            <td><input type="text" id="input-${idx}-b2" value="${ag.b2 || ''}" readonly style="width: 75px;"></td>
+            <td><input type="text" id="input-${idx}-out" value="${ag.out || ''}" readonly style="width: 75px;"></td>
+            <td>
+              <div class="action-btn-group" id="btn-group-${idx}">
+                <button class="btn-edit" onclick="enableRowEdit(${idx})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          `;
+        } else {
+          tr.innerHTML = `
+            <td class="agent-name-cell">
+              <i class="fa-solid fa-bars drag-handle" title="Drag to reorder"></i>
+              <input type="text" id="input-${idx}-name" value="${ag.name || ''}" readonly>
+            </td>
+            <td><input type="text" id="input-${idx}-task" value="${ag.task || 'Phones'}" readonly style="width: 120px;"></td>
+            <td><input type="text" id="input-${idx}-site" value="${ag.site || ''}" readonly style="width: 60px;"></td>
+            <td><input type="text" id="input-${idx}-in" value="${ag.in || ''}" readonly style="width: 75px;"></td>
+            <td><input type="text" id="input-${idx}-b1" value="${ag.b1 || ''}" readonly style="width: 75px;"></td>
+            <td><input type="text" id="input-${idx}-lu" value="${ag.lu || ''}" readonly style="width: 110px;"></td>
+            <td><input type="text" id="input-${idx}-b2" value="${ag.b2 || ''}" readonly style="width: 75px;"></td>
+            <td><input type="text" id="input-${idx}-out" value="${ag.out || ''}" readonly style="width: 75px;"></td>
+            <td>
+              <div class="action-btn-group" id="btn-group-${idx}">
+                <button class="btn-edit" onclick="enableRowEdit(${idx})" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn-delete" onclick="removeAgent(${idx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          `;
+        }
         tbody.appendChild(tr);
       });
 
@@ -824,7 +911,10 @@
       checkPassword(function(passed) {
         if (!passed) return;
 
-        const fields = ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+        const fields = isQATeam() 
+          ? ['name', 'site', 'in', 'qa_eval', 'b1', 't2_calls', 'lu', 'obs_calls', 'b2', 'out']
+          : ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+
         fields.forEach(f => {
           const input = document.getElementById(`input-${idx}-${f}`);
           if (input) {
@@ -844,7 +934,10 @@
     }
 
     function saveRowEdit(idx) {
-      const fields = ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+      const fields = isQATeam() 
+        ? ['name', 'site', 'in', 'qa_eval', 'b1', 't2_calls', 'lu', 'obs_calls', 'b2', 'out']
+        : ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+
       fields.forEach(f => {
         const input = document.getElementById(`input-${idx}-${f}`);
         if (input) {
@@ -864,27 +957,55 @@
 
         if (!scheduleData[activeTeam]) scheduleData[activeTeam] = [];
         const defaultSite = selectedSiteFilter !== "ALL" ? selectedSiteFilter : "GUA";
-        const defaultTask = selectedTaskFilter !== "ALL" ? selectedTaskFilter : "Phones";
         const newIdx = scheduleData[activeTeam].length;
         
         const isNightShift = (activeTeam === "After Hour Team");
         const defaultIn = isNightShift ? "16:00" : "08:00";
         const defaultOut = isNightShift ? "01:00" : "17:00";
         
-        scheduleData[activeTeam].push({ name: "New Agent", task: defaultTask, site: defaultSite, in: defaultIn, b1: "", lu: "", b2: "", out: defaultOut });
+        if (isQATeam()) {
+          scheduleData[activeTeam].push({
+            name: "New Agent",
+            site: defaultSite,
+            in: defaultIn,
+            qa_eval: "",
+            b1: "",
+            t2_calls: "",
+            lu: "",
+            obs_calls: "",
+            b2: "",
+            out: defaultOut
+          });
+        } else {
+          const defaultTask = selectedTaskFilter !== "ALL" ? selectedTaskFilter : "Phones";
+          scheduleData[activeTeam].push({
+            name: "New Agent",
+            task: defaultTask,
+            site: defaultSite,
+            in: defaultIn,
+            b1: "",
+            lu: "",
+            b2: "",
+            out: defaultOut
+          });
+        }
+
         saveToStorage();
         renderTable();
         
-        const fields = ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+        const fields = isQATeam()
+          ? ['name', 'site', 'in', 'qa_eval', 'b1', 't2_calls', 'lu', 'obs_calls', 'b2', 'out']
+          : ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
+
         fields.forEach(f => {
           const input = document.getElementById(`input-${newIdx}-${f}`);
-          if(input) {
+          if (input) {
             input.removeAttribute('readonly');
             input.classList.add('editing-mode');
           }
         });
         const btnGroup = document.getElementById(`btn-group-${newIdx}`);
-        if(btnGroup) {
+        if (btnGroup) {
           btnGroup.innerHTML = `
             <button class="btn-save" onclick="saveRowEdit(${newIdx})" title="Save Changes"><i class="fa-solid fa-floppy-disk"></i></button>
             <button class="btn-delete" onclick="removeAgent(${newIdx})" title="Delete"><i class="fa-solid fa-trash"></i></button>
@@ -982,6 +1103,7 @@
     function renderHeatmap() {
       const wrap = document.getElementById("heatmap-wrap");
       const agents = getFilteredAgents();
+      const isQA = isQATeam();
 
       document.getElementById("kpi-total-agents").innerText = agents.length;
 
@@ -1006,7 +1128,8 @@
       timeSlotsForTeam.forEach(ts => slotCounts[ts.absMin] = { duty: 0, break: 0 });
 
       agents.forEach(ag => {
-        html += `<tr><td class="agent-col">${ag.name} (${ag.task || 'Phones'} - ${ag.site})</td>`;
+        const labelText = isQA ? `${ag.name} (${ag.site || ''})` : `${ag.name} (${ag.task || 'Phones'} - ${ag.site || ''})`;
+        html += `<tr><td class="agent-col">${labelText}</td>`;
         
         const shiftRange = getAdjustedInterval(ag.in, ag.out, isNightShift);
         const b1Val = getAdjustedInterval(ag.b1, null, isNightShift);
@@ -1067,21 +1190,42 @@
         return;
       }
 
-      let csvContent = "\uFEFFTeam,Agent Name,Task,Site / Branch,Clock In,Break 1,Lunch,Break 2,Clock Out\n";
-      agents.forEach(ag => {
-        const row = [
-          `"${activeTeam}"`,
-          `"${ag.name || ''}"`,
-          `"${ag.task || ''}"`,
-          `"${ag.site || ''}"`,
-          `"${ag.in || ''}"`,
-          `"${ag.b1 || ''}"`,
-          `"${ag.lu || ''}"`,
-          `"${ag.b2 || ''}"`,
-          `"${ag.out || ''}"`
-        ];
-        csvContent += row.join(",") + "\n";
-      });
+      let csvContent = "";
+      if (isQATeam()) {
+        csvContent = "\uFEFFTeam,Agent Name,Site / Branch,Clock In,QA Evaluations,Break 1,Tier 2 Calls,Lunch,OBS Calls,Break 2,Clock Out\n";
+        agents.forEach(ag => {
+          const row = [
+            `"${activeTeam}"`,
+            `"${ag.name || ''}"`,
+            `"${ag.site || ''}"`,
+            `"${ag.in || ''}"`,
+            `"${ag.qa_eval || ''}"`,
+            `"${ag.b1 || ''}"`,
+            `"${ag.t2_calls || ''}"`,
+            `"${ag.lu || ''}"`,
+            `"${ag.obs_calls || ''}"`,
+            `"${ag.b2 || ''}"`,
+            `"${ag.out || ''}"`
+          ];
+          csvContent += row.join(",") + "\n";
+        });
+      } else {
+        csvContent = "\uFEFFTeam,Agent Name,Task,Site / Branch,Clock In,Break 1,Lunch,Break 2,Clock Out\n";
+        agents.forEach(ag => {
+          const row = [
+            `"${activeTeam}"`,
+            `"${ag.name || ''}"`,
+            `"${ag.task || ''}"`,
+            `"${ag.site || ''}"`,
+            `"${ag.in || ''}"`,
+            `"${ag.b1 || ''}"`,
+            `"${ag.lu || ''}"`,
+            `"${ag.b2 || ''}"`,
+            `"${ag.out || ''}"`
+          ];
+          csvContent += row.join(",") + "\n";
+        });
+      }
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
