@@ -129,7 +129,7 @@
     /* QA Team Dedicated Heatmap Colors */
     .qa-cell { background-color: #ea580c !important; color: #ffffff !important; font-weight: 800; }
     .t2-cell { background-color: #0284c7 !important; color: #ffffff !important; font-weight: 800; }
-    .obs-cell { background-color: #cbd5e1 !important; color: #000000 !important; font-weight: 800; }
+    .obs-cell { background-color: #facc15 !important; color: #000000 !important; font-weight: 900; }
 
     .editable-table-wrap { overflow-x: auto; max-height: 400px; }
     table.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
@@ -563,7 +563,7 @@
         { name: "Maria Saucedo", task: "TFX", site: "MX", in: "08:00", b1: "12:30", lu: "14:00-15:00", b2: "15:45", out: "17:00" }
       ],
       "QA / T2 Team": [
-        { name: "Sample Agent", site: "GUA", in: "07:00", qa_eval: "07:00-08:30, 14:00-15:00", b1: "09:00", t2_calls: "09:15-12:00", lu: "12:00-13:00", obs_calls: "13:00-14:00", b2: "15:30", out: "16:00" }
+        { name: "Sample Agent", site: "GUA", in: "07:00", qa_eval: "07:00-08:30, 14:00-15:00", t2_calls: "09:15-12:00", lu: "12:00-13:00", obs_calls: "13:00-14:00", out: "16:00" }
       ],
       "After Hour Team": [
         { name: "Mary Rafols", task: "After Hours Team", site: "PHI", in: "16:00", b1: "18:00", lu: "20:00-21:00", b2: "23:15", out: "01:00" },
@@ -774,11 +774,9 @@
             </th>
             <th>Clock In</th>
             <th>QA Evaluations</th>
-            <th>Break 1</th>
             <th>Tier 2 Calls</th>
             <th>Lunch</th>
             <th>OBS Calls</th>
-            <th>Break 2</th>
             <th>Clock Out</th>
             <th>Actions</th>
           </tr>
@@ -864,11 +862,9 @@
             <td><input type="text" id="input-${idx}-site" value="${ag.site || ''}" readonly style="width: 60px;"></td>
             <td><input type="text" id="input-${idx}-in" value="${ag.in || ''}" readonly style="width: 75px;"></td>
             <td><input type="text" id="input-${idx}-qa_eval" value="${ag.qa_eval || ''}" readonly style="width: 140px;" placeholder="e.g. 7:00-8:30, 14:00-15:00"></td>
-            <td><input type="text" id="input-${idx}-b1" value="${ag.b1 || ''}" readonly style="width: 75px;"></td>
             <td><input type="text" id="input-${idx}-t2_calls" value="${ag.t2_calls || ''}" readonly style="width: 140px;" placeholder="e.g. 9:00-11:00"></td>
             <td><input type="text" id="input-${idx}-lu" value="${ag.lu || ''}" readonly style="width: 110px;"></td>
             <td><input type="text" id="input-${idx}-obs_calls" value="${ag.obs_calls || ''}" readonly style="width: 140px;" placeholder="e.g. 13:00-14:00"></td>
-            <td><input type="text" id="input-${idx}-b2" value="${ag.b2 || ''}" readonly style="width: 75px;"></td>
             <td><input type="text" id="input-${idx}-out" value="${ag.out || ''}" readonly style="width: 75px;"></td>
             <td>
               <div class="action-btn-group" id="btn-group-${idx}">
@@ -939,7 +935,7 @@
         if (!passed) return;
 
         const fields = isQATeam() 
-          ? ['name', 'site', 'in', 'qa_eval', 'b1', 't2_calls', 'lu', 'obs_calls', 'b2', 'out']
+          ? ['name', 'site', 'in', 'qa_eval', 't2_calls', 'lu', 'obs_calls', 'out']
           : ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
 
         fields.forEach(f => {
@@ -962,7 +958,7 @@
 
     function saveRowEdit(idx) {
       const fields = isQATeam() 
-        ? ['name', 'site', 'in', 'qa_eval', 'b1', 't2_calls', 'lu', 'obs_calls', 'b2', 'out']
+        ? ['name', 'site', 'in', 'qa_eval', 't2_calls', 'lu', 'obs_calls', 'out']
         : ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
 
       fields.forEach(f => {
@@ -996,11 +992,9 @@
             site: defaultSite,
             in: defaultIn,
             qa_eval: "",
-            b1: "",
             t2_calls: "",
             lu: "",
             obs_calls: "",
-            b2: "",
             out: defaultOut
           });
         } else {
@@ -1021,7 +1015,7 @@
         renderTable();
         
         const fields = isQATeam()
-          ? ['name', 'site', 'in', 'qa_eval', 'b1', 't2_calls', 'lu', 'obs_calls', 'b2', 'out']
+          ? ['name', 'site', 'in', 'qa_eval', 't2_calls', 'lu', 'obs_calls', 'out']
           : ['name', 'task', 'site', 'in', 'b1', 'lu', 'b2', 'out'];
 
         fields.forEach(f => {
@@ -1151,8 +1145,8 @@
         legendElem.innerHTML = `
           Green = On Duty (ON), <span style="color:#f97316;font-weight:bold;">Orange = QA Evaluations (QA)</span>, 
           <span style="color:#38bdf8;font-weight:bold;">Peacock Blue = Tier 2 Calls (T2)</span>, 
-          <span style="color:#94a3b8;font-weight:bold;">Light Gray = OBS Calls (OBS)</span>, 
-          Brown = Break (BR), Pink = Lunch (LU).
+          <span style="background-color:#facc15;color:#000000;padding:1px 5px;border-radius:3px;font-weight:900;">Bright Yellow = OBS Calls (OBS)</span>, 
+          Pink = Lunch (LU).
         `;
       } else {
         legendElem.innerHTML = `Green = On Duty (ON), Brown = Break (BR), Pink/Red = Lunch (LU).`;
@@ -1172,8 +1166,8 @@
         html += `<tr><td class="agent-col">${labelText}</td>`;
         
         const shiftRange = getAdjustedInterval(ag.in, ag.out, isNightShift);
-        const b1Val = getAdjustedInterval(ag.b1, null, isNightShift);
-        const b2Val = getAdjustedInterval(ag.b2, null, isNightShift);
+        const b1Val = !isQA ? getAdjustedInterval(ag.b1, null, isNightShift) : { start: null, end: null };
+        const b2Val = !isQA ? getAdjustedInterval(ag.b2, null, isNightShift) : { start: null, end: null };
 
         let luRange = { start: null, end: null };
         if (ag.lu && ag.lu.includes('-')) {
@@ -1192,10 +1186,10 @@
           let label = "";
 
           if (shiftRange.start !== null && shiftRange.end !== null && slotM >= shiftRange.start && slotM < shiftRange.end) {
-            if (b1Val.start !== null && slotM === b1Val.start) {
+            if (!isQA && b1Val.start !== null && slotM === b1Val.start) {
               cellClass = "break-cell"; label = "BR";
               slotCounts[slotM].break++;
-            } else if (b2Val.start !== null && slotM === b2Val.start) {
+            } else if (!isQA && b2Val.start !== null && slotM === b2Val.start) {
               cellClass = "break-cell"; label = "BR";
               slotCounts[slotM].break++;
             } else if (luRange.start !== null && luRange.end !== null && slotM >= luRange.start && slotM < luRange.end) {
@@ -1274,25 +1268,23 @@
             .lunch { background-color: #831843; color: #fbcfe8; font-weight: bold; }
             .qa { background-color: #ea580c; color: #ffffff; font-weight: bold; }
             .t2 { background-color: #0284c7; color: #ffffff; font-weight: bold; }
-            .obs { background-color: #cbd5e1; color: #000000; font-weight: bold; }
+            .obs { background-color: #facc15; color: #000000; font-weight: bold; }
             .total-row { background-color: #f1f5f9; color: #059669; font-weight: bold; }
           </style>
         </head>
         <body>
           <!-- SECTION 1: AGENT SCHEDULE DETAILS -->
           <table>
-            <tr><td colspan="${isQA ? 10 : 9}" class="sec-title">${activeTeam.toUpperCase()} - AGENT SCHEDULE DETAILS</td></tr>
+            <tr><td colspan="${isQA ? 8 : 9}" class="sec-title">${activeTeam.toUpperCase()} - AGENT SCHEDULE DETAILS</td></tr>
             <tr class="th-header">
               <th style="text-align: left;">Agent Name</th>
               ${isQA ? `
                 <th>Site / Branch</th>
                 <th>Clock In</th>
                 <th>QA Evaluations</th>
-                <th>Break 1</th>
                 <th>Tier 2 Calls</th>
                 <th>Lunch</th>
                 <th>OBS Calls</th>
-                <th>Break 2</th>
                 <th>Clock Out</th>
               ` : `
                 <th>Task</th>
@@ -1314,11 +1306,9 @@
               <td>${ag.site || ''}</td>
               <td>${ag.in || ''}</td>
               <td>${ag.qa_eval || ''}</td>
-              <td>${ag.b1 || ''}</td>
               <td>${ag.t2_calls || ''}</td>
               <td>${ag.lu || ''}</td>
               <td>${ag.obs_calls || ''}</td>
-              <td>${ag.b2 || ''}</td>
               <td>${ag.out || ''}</td>
             </tr>
           `;
@@ -1362,8 +1352,8 @@
         excelHTML += `<tr><td style="text-align: left; font-weight: bold;">${labelText}</td>`;
 
         const shiftRange = getAdjustedInterval(ag.in, ag.out, isNightShift);
-        const b1Val = getAdjustedInterval(ag.b1, null, isNightShift);
-        const b2Val = getAdjustedInterval(ag.b2, null, isNightShift);
+        const b1Val = !isQA ? getAdjustedInterval(ag.b1, null, isNightShift) : { start: null, end: null };
+        const b2Val = !isQA ? getAdjustedInterval(ag.b2, null, isNightShift) : { start: null, end: null };
 
         let luRange = { start: null, end: null };
         if (ag.lu && ag.lu.includes('-')) {
@@ -1381,10 +1371,10 @@
           let label = "";
 
           if (shiftRange.start !== null && shiftRange.end !== null && slotM >= shiftRange.start && slotM < shiftRange.end) {
-            if (b1Val.start !== null && slotM === b1Val.start) {
+            if (!isQA && b1Val.start !== null && slotM === b1Val.start) {
               cellClass = "class='break'"; label = "BR";
               slotCounts[slotM].break++;
-            } else if (b2Val.start !== null && slotM === b2Val.start) {
+            } else if (!isQA && b2Val.start !== null && slotM === b2Val.start) {
               cellClass = "class='break'"; label = "BR";
               slotCounts[slotM].break++;
             } else if (luRange.start !== null && luRange.end !== null && slotM >= luRange.start && slotM < luRange.end) {
