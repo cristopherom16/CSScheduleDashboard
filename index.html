@@ -24,76 +24,6 @@
       --modal-overlay: rgba(11, 19, 41, 0.85);
     }
 
-    /* LIGHT MODE STYLES OVERRIDE */
-    body.light-mode {
-      --bg: #ffebb5; /* Combinación amarillo huevo claro */
-      --panel: #ffda75; /* Amarillo ámbar / huevo */
-      --border: #0b1329; /* Azul obscuro */
-      --accent: #0b1329; /* Azul obscuro */
-      --accent-hover: #111c38;
-      --text: #0b1329; /* Azul obscuro para letras */
-      --text-muted: #0b1329;
-      --amber: #0b1329; /* Títulos y acentos en azul obscuro */
-      --input-bg: #ffebb5; /* Fondo de inputs en amarillo claro */
-      --input-text: #0b1329; /* Texto de inputs en azul obscuro */
-      --modal-overlay: rgba(255, 218, 117, 0.85);
-    }
-
-    body.light-mode header,
-    body.light-mode .card,
-    body.light-mode .kpi-card,
-    body.light-mode select,
-    body.light-mode input {
-      background-color: var(--panel) !important;
-      color: var(--text) !important;
-      border-color: var(--border) !important;
-    }
-
-    body.light-mode .grid-table th,
-    body.light-mode .grid-table td.agent-col,
-    body.light-mode table.data-table th {
-      background-color: #ffcc5c !important; /* Amarillo más intenso para encabezados */
-      color: #0b1329 !important;
-      border-color: #0b1329 !important;
-    }
-
-    body.light-mode .grid-table td, 
-    body.light-mode table.data-table td {
-      border-color: #0b1329 !important; /* Gridlines azul obscuro */
-      color: #0b1329 !important; /* Todas las letras/números de celdas en azul obscuro */
-    }
-
-    body.light-mode .off-cell {
-      background-color: #ffebb5 !important;
-    }
-
-    body.light-mode tr.branch-usa {
-      background-color: #ffda75 !important; /* Reemplazo del blanco original de esta fila */
-      color: #0b1329 !important;
-    }
-
-    /* Sobrescribir elementos de texto y números sueltos para forzar el azul obscuro */
-    body.light-mode h1, 
-    body.light-mode h1 i,
-    body.light-mode h3, 
-    body.light-mode h3 i,
-    body.light-mode .kpi-card .val,
-    body.light-mode .kpi-card div,
-    body.light-mode label,
-    body.light-mode p,
-    body.light-mode #last-updated,
-    body.light-mode #heatmap-legend,
-    body.light-mode .grid-table tr:last-child td {
-      color: #0b1329 !important;
-    }
-
-    body.light-mode .theme-toggle-btn {
-      background: var(--panel);
-      color: #0b1329;
-      border-color: #0b1329;
-    }
-    /* END LIGHT MODE STYLES OVERRIDE */
-
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 20px; transition: background-color 0.3s, color 0.3s; }
 
@@ -276,16 +206,164 @@
       transform: translateY(-2px);
       background: #059669;
     }
+
+    /* ==========================================================================
+       LIGHT MODE DEFINITIVE OVERRIDE (Amarillo Ámbar / Huevo & Azul Obscuro)
+       ========================================================================== */
+    body.light-mode {
+      --bg: #ffebb5;          /* Fondo: Amarillo huevo suave */
+      --panel: #ffda75;       /* Paneles y cards: Amarillo ámbar */
+      --border: #0b1329;      /* Gridlines y bordes: Azul obscuro */
+      --accent: #0b1329;
+      --accent-hover: #162447;
+      --text: #0b1329;        /* Letras: Azul obscuro */
+      --text-muted: #0b1329;
+      --amber: #0b1329;
+      --input-bg: #fff2b2;    /* Inputs: Amarillo huevo claro */
+      --input-text: #0b1329;
+      --modal-overlay: rgba(11, 19, 41, 0.7);
+    }
+
+    body.light-mode {
+      background-color: var(--bg) !important;
+      color: var(--text) !important;
+    }
+
+    /* Encabezado y títulos */
+    body.light-mode header {
+      border-bottom: 2px solid #0b1329 !important;
+    }
+    body.light-mode h1,
+    body.light-mode h1 i,
+    body.light-mode h3,
+    body.light-mode h3 i,
+    body.light-mode label,
+    body.light-mode p,
+    body.light-mode #last-updated,
+    body.light-mode #last-updated i,
+    body.light-mode #heatmap-legend,
+    body.light-mode #heatmap-legend span {
+      color: #0b1329 !important;
+    }
+
+    /* Tarjetas y Contenedores */
+    body.light-mode .card,
+    body.light-mode .kpi-card {
+      background-color: #ffda75 !important;
+      border: 1.5px solid #0b1329 !important;
+    }
+
+    /* Números y textos en Tarjetas KPI */
+    body.light-mode .kpi-card div {
+      color: #0b1329 !important;
+    }
+    body.light-mode .kpi-card .val,
+    body.light-mode #kpi-total-agents,
+    body.light-mode #kpi-peak-staffing,
+    body.light-mode #kpi-max-breaks {
+      color: #0b1329 !important;
+    }
+
+    /* Inputs, Selects y Botones */
+    body.light-mode select,
+    body.light-mode input {
+      background-color: #fff2b2 !important;
+      color: #0b1329 !important;
+      border: 1px solid #0b1329 !important;
+    }
+    body.light-mode select option {
+      background-color: #fff2b2 !important;
+      color: #0b1329 !important;
+    }
+    body.light-mode button {
+      border: 1px solid #0b1329 !important;
+    }
+    body.light-mode .card-header-flex button,
+    body.light-mode .theme-toggle-btn {
+      background-color: #ffda75 !important;
+      color: #0b1329 !important;
+      border: 1.5px solid #0b1329 !important;
+    }
+
+    /* Gridlines y Bordes de Tablas */
+    body.light-mode .grid-table,
+    body.light-mode .grid-table th,
+    body.light-mode .grid-table td,
+    body.light-mode table.data-table,
+    body.light-mode table.data-table th,
+    body.light-mode table.data-table td {
+      border: 1px solid #0b1329 !important; /* Gridlines en azul obscuro */
+    }
+
+    /* Encabezados de Tablas */
+    body.light-mode .grid-table th,
+    body.light-mode table.data-table th {
+      background-color: #ffcc5c !important; /* Amarillo huevo más fuerte */
+      color: #0b1329 !important;            /* Letras y números en azul obscuro */
+    }
+
+    /* Columna fija de agentes */
+    body.light-mode .grid-table td.agent-col {
+      background-color: #ffda75 !important;
+      color: #0b1329 !important;
+    }
+
+    /* Celdas Off-duty (lo que antes era blanco/gris) */
+    body.light-mode .off-cell {
+      background-color: #ffebb5 !important;
+      color: #0b1329 !important;
+    }
+
+    /* Fila resumen TOTAL ON DUTY (Números en azul obscuro) */
+    body.light-mode .grid-table tr:last-child td {
+      color: #0b1329 !important;
+      background-color: #ffda75 !important;
+    }
+
+    /* Letras y números en la tabla de datos de agentes */
+    body.light-mode table.data-table td,
+    body.light-mode table.data-table td input,
+    body.light-mode tr.draggable-row td input {
+      color: #0b1329 !important;
+    }
+    body.light-mode table.data-table td input.editing-mode {
+      background-color: #fff2b2 !important;
+      color: #0b1329 !important;
+      border-color: #0b1329 !important;
+    }
+    body.light-mode .drag-handle {
+      color: #0b1329 !important;
+    }
+
+    /* Reemplazo de filas con fondo blanco (Branch USA) */
+    body.light-mode tr.branch-usa {
+      background-color: #ffda75 !important;
+      color: #0b1329 !important;
+    }
+
+    /* Modal */
+    body.light-mode .modal-card {
+      background-color: #ffda75 !important;
+      border: 2px solid #0b1329 !important;
+    }
+    body.light-mode .modal-card h3 {
+      color: #0b1329 !important;
+    }
+    body.light-mode .modal-card input {
+      background-color: #fff2b2 !important;
+      color: #0b1329 !important;
+      border: 1px solid #0b1329 !important;
+    }
   </style>
 </head>
-<body>
+<body class="light-mode">
 
   <header>
     <h1><i class="fa-solid fa-calendar-days"></i> CUSTOMER SUPPORT SCHEDULE DASHBOARD</h1>
     <div style="text-align: right;">
       <span id="last-updated" style="font-size: 0.8rem; color: #10b981; display: block;"><i class="fa-solid fa-lock"></i> Protected Operations Panel</span>
       <button class="theme-toggle-btn" onclick="toggleTheme()" title="Toggle Light/Dark Mode">
-        <i id="themeIcon" class="fa-solid fa-sun" style="font-size: 0.85rem;"></i>
+        <i id="themeIcon" class="fa-solid fa-moon" style="font-size: 0.85rem;"></i>
       </button>
     </div>
   </header>
@@ -445,15 +523,16 @@
     }
 
     function initTheme() {
-      const savedTheme = localStorage.getItem('schedule_dashboard_theme') || 'dark';
+      // Inicia por defecto en modo claro si no hay preferencia previa
+      const savedTheme = localStorage.getItem('schedule_dashboard_theme');
       const icon = document.getElementById('themeIcon');
 
-      if (savedTheme === 'light') {
-        document.body.classList.add('light-mode');
-        if (icon) icon.className = 'fa-solid fa-moon';
-      } else {
+      if (savedTheme === 'dark') {
         document.body.classList.remove('light-mode');
         if (icon) icon.className = 'fa-solid fa-sun';
+      } else {
+        document.body.classList.add('light-mode');
+        if (icon) icon.className = 'fa-solid fa-moon';
       }
     }
 
