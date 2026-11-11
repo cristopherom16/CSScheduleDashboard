@@ -26,17 +26,17 @@
 
     /* LIGHT MODE STYLES OVERRIDE */
     body.light-mode {
-      --bg: #f8fafc;
-      --panel: #ffffff;
-      --border: #d97706;
-      --accent: #d97706;
-      --accent-hover: #b45309;
-      --text: #0f172a;
-      --text-muted: #b45309;
-      --amber: #b45309;
-      --input-bg: #ffffff;
-      --input-text: #0f172a;
-      --modal-overlay: rgba(15, 23, 42, 0.65);
+      --bg: #ffebb5; /* Combinación amarillo huevo claro */
+      --panel: #ffda75; /* Amarillo ámbar / huevo */
+      --border: #0b1329; /* Azul obscuro */
+      --accent: #0b1329; /* Azul obscuro */
+      --accent-hover: #111c38;
+      --text: #0b1329; /* Azul obscuro para letras */
+      --text-muted: #0b1329;
+      --amber: #0b1329; /* Títulos y acentos en azul obscuro */
+      --input-bg: #ffebb5; /* Fondo de inputs en amarillo claro */
+      --input-text: #0b1329; /* Texto de inputs en azul obscuro */
+      --modal-overlay: rgba(255, 218, 117, 0.85);
     }
 
     body.light-mode header,
@@ -46,19 +46,53 @@
     body.light-mode input {
       background-color: var(--panel) !important;
       color: var(--text) !important;
+      border-color: var(--border) !important;
     }
 
     body.light-mode .grid-table th,
     body.light-mode .grid-table td.agent-col,
     body.light-mode table.data-table th {
-      background-color: #f1f5f9 !important;
-      color: #0f172a !important;
+      background-color: #ffcc5c !important; /* Amarillo más intenso para encabezados */
+      color: #0b1329 !important;
+      border-color: #0b1329 !important;
+    }
+
+    body.light-mode .grid-table td, 
+    body.light-mode table.data-table td {
+      border-color: #0b1329 !important; /* Gridlines azul obscuro */
+      color: #0b1329 !important; /* Todas las letras/números de celdas en azul obscuro */
     }
 
     body.light-mode .off-cell {
-      background-color: #e2e8f0 !important;
-      color: #64748b !important;
+      background-color: #ffebb5 !important;
     }
+
+    body.light-mode tr.branch-usa {
+      background-color: #ffda75 !important; /* Reemplazo del blanco original de esta fila */
+      color: #0b1329 !important;
+    }
+
+    /* Sobrescribir elementos de texto y números sueltos para forzar el azul obscuro */
+    body.light-mode h1, 
+    body.light-mode h1 i,
+    body.light-mode h3, 
+    body.light-mode h3 i,
+    body.light-mode .kpi-card .val,
+    body.light-mode .kpi-card div,
+    body.light-mode label,
+    body.light-mode p,
+    body.light-mode #last-updated,
+    body.light-mode #heatmap-legend,
+    body.light-mode .grid-table tr:last-child td {
+      color: #0b1329 !important;
+    }
+
+    body.light-mode .theme-toggle-btn {
+      background: var(--panel);
+      color: #0b1329;
+      border-color: #0b1329;
+    }
+    /* END LIGHT MODE STYLES OVERRIDE */
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 20px; transition: background-color 0.3s, color 0.3s; }
